@@ -103,3 +103,7 @@ Thumbs.db
 
 # User-specific launch files
 *.slnLaunch.user
+
+# Documentação interna (não enviar para GitHub)
+agentes/
+especificacao/
