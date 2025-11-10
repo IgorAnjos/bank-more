@@ -58,19 +58,19 @@ services:
     volumes:
       - redis-data:/data
 
-  # Seq - Agregação de Logs
-  seq:
-    image: datalust/seq:latest
-    container_name: banco-seq
-    environment:
-      - ACCEPT_EULA=Y
-    ports:
-      - "5341:80"
-    networks:
-      - banco-network
-    volumes:
-      - seq-data:/data
-    restart: unless-stopped
+  # Seq - Agregação de Logs (Temporariamente desabilitado)
+  # seq:
+  #   image: datalust/seq:latest
+  #   container_name: banco-seq
+  #   environment:
+  #     - ACCEPT_EULA=Y
+  #   ports:
+  #     - "5341:80"
+  #   networks:
+  #     - banco-network
+  #   volumes:
+  #     - seq-data:/data
+  #   restart: unless-stopped
 
   # Prometheus - Coleta de Métricas
   prometheus:
@@ -118,8 +118,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      seq:
-        condition: service_started
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5003
@@ -157,8 +155,6 @@ services:
         condition: service_healthy
       api-conta:
         condition: service_started
-      seq:
-        condition: service_started
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5004
@@ -192,8 +188,6 @@ services:
       kafka:
         condition: service_healthy
       api-conta:
-        condition: service_started
-      seq:
         condition: service_started
     environment:
       - DOTNET_ENVIRONMENT=Development
