@@ -1,0 +1,119 @@
+@page "/cadastro"
+@using BankMore.Web.Models
+@using BankMore.Web.Services
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Cadastro - BankMore</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">Criar Conta - BankMore</h3>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @errorMessage
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="alert alert-success" role="alert">
+                            @successMessage
+                        </div>
+                    }
+
+                    <EditForm Model="@cadastroRequest" OnValidSubmit="@HandleCadastro">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-3">
+                            <label for="cpf" class="form-label">CPF</label>
+                            <InputText id="cpf" class="form-control" @bind-Value="cadastroRequest.Cpf" placeholder="000.000.000-00" />
+                            <ValidationMessage For="@(() => cadastroRequest.Cpf)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome Completo</label>
+                            <InputText id="nome" class="form-control" @bind-Value="cadastroRequest.Nome" placeholder="Digite seu nome completo" />
+                            <ValidationMessage For="@(() => cadastroRequest.Nome)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="senha" class="form-label">Senha</label>
+                            <InputText type="password" id="senha" class="form-control" @bind-Value="cadastroRequest.Senha" placeholder="Digite sua senha" />
+                            <ValidationMessage For="@(() => cadastroRequest.Senha)" />
+                            <small class="form-text text-muted">A senha deve ter no mínimo 6 caracteres.</small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success" disabled="@isLoading">
+                                @if (isLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                }
+                                Criar Conta
+                            </button>
+                        </div>
+                    </EditForm>
+
+                    <hr />
+
+                    <div class="text-center">
+                        <p>Já tem uma conta?</p>
+                        <button class="btn btn-outline-primary" @onclick="NavigateToLogin">
+                            Fazer Login
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private CadastrarContaRequest cadastroRequest = new();
+    private string? errorMessage;
+    private string? successMessage;
+    private bool isLoading = false;
+
+    private async Task HandleCadastro()
+    {
+        isLoading = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            var response = await AuthService.CadastrarContaAsync(cadastroRequest);
+
+            if (response != null)
+            {
+                successMessage = $"Conta criada com sucesso! Número da conta: {response.NumeroContaCorrente}";
+                await Task.Delay(2000);
+                NavigationManager.NavigateTo("/login");
+            }
+            else
+            {
+                errorMessage = "Erro ao criar conta. Verifique os dados e tente novamente.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro ao criar conta: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToLogin()
+    {
+        NavigationManager.NavigateTo("/login");
+    }
+}

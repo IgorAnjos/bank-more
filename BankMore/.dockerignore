@@ -1,0 +1,46 @@
+# Ignorar binários e cache
+**/bin/
+**/obj/
+**/out/
+
+# Bancos de dados SQLite
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# Diretórios do Visual Studio / Rider
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.cache
+
+# NuGet
+*.nupkg
+**/packages/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Testes
+**/TestResults/
+**/*.trx
+
+# README e documentação
+*.md
+LICENSE

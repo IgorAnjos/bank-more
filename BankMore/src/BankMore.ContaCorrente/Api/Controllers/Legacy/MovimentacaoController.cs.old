@@ -1,0 +1,126 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using MediatR;
+using BankMore.ContaCorrente.Application.Commands;
+using BankMore.ContaCorrente.Application.DTOs;
+using System.Security.Claims;
+
+namespace BankMore.ContaCorrente.Api.Controllers;
+
+/// <summary>
+/// Controller para movimentações na conta corrente
+/// </summary>
+[ApiController]
+[Route("api/[controller]")]
+[Produces("application/json")]
+[Authorize]
+public class MovimentacaoController : ControllerBase
+{
+    private readonly IMediator _mediator;
+
+    public MovimentacaoController(IMediator mediator)
+    {
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+    }
+
+    /// <summary>
+    /// Realiza uma movimentação (crédito ou débito) na conta corrente
+    /// </summary>
+    /// <param name="request">Dados da movimentação</param>
+    /// <returns>Status da operação</returns>
+    /// <response code="204">Movimentação realizada com sucesso</response>
+    /// <response code="400">Dados inconsistentes</response>
+    /// <response code="403">Token inválido ou expirado</response>
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ErroDto), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> RealizarMovimentacao([FromBody] MovimentacaoRequest request)
+    {
+        try
+        {
+            var idContaCorrente = User.FindFirstValue("idcontacorrente");
+            
+            if (string.IsNullOrEmpty(idContaCorrente))
+                return Forbid();
+
+            var command = new MovimentacaoCommand
+            {
+                ChaveIdempotencia = request.ChaveIdempotencia,
+                IdContaCorrente = idContaCorrente,
+                NumeroConta = request.NumeroConta,
+                TipoMovimento = request.TipoMovimento,
+                Valor = request.Valor
+            };
+
+            await _mediator.Send(command);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("INVALID_ACCOUNT"))
+        {
+            return BadRequest(new ErroDto
+            {
+                Tipo = "INVALID_ACCOUNT",
+                Mensagem = "Conta não cadastrada"
+            });
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("INACTIVE_ACCOUNT"))
+        {
+            return BadRequest(new ErroDto
+            {
+                Tipo = "INACTIVE_ACCOUNT",
+                Mensagem = "Conta inativa"
+            });
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("INVALID_VALUE"))
+        {
+            return BadRequest(new ErroDto
+            {
+                Tipo = "INVALID_VALUE",
+                Mensagem = "Valor deve ser maior que zero"
+            });
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("INVALID_TYPE"))
+        {
+            return BadRequest(new ErroDto
+            {
+                Tipo = "INVALID_TYPE",
+                Mensagem = ex.Message.Replace("INVALID_TYPE: ", "")
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new ErroDto
+            {
+                Tipo = "ERROR",
+                Mensagem = ex.Message
+            });
+        }
+    }
+}
+
+/// <summary>
+/// Request para movimentação
+/// </summary>
+public class MovimentacaoRequest
+{
+    /// <summary>
+    /// Chave de idempotência para evitar duplicação
+    /// </summary>
+    public string ChaveIdempotencia { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Número da conta (opcional, se não informado usa a conta do token)
+    /// </summary>
+    public int? NumeroConta { get; set; }
+
+    /// <summary>
+    /// Tipo de movimento: C = Crédito, D = Débito
+    /// </summary>
+    public char TipoMovimento { get; set; }
+
+    /// <summary>
+    /// Valor da movimentação (sempre positivo)
+    /// </summary>
+    public decimal Valor { get; set; }
+}

@@ -1,0 +1,120 @@
+@page "/login"
+@using BankMore.Web.Models
+@using BankMore.Web.Services
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Login - BankMore</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Login - BankMore</h3>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @errorMessage
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="alert alert-success" role="alert">
+                            @successMessage
+                        </div>
+                    }
+
+                    <EditForm Model="@loginRequest" OnValidSubmit="@HandleLogin">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-3">
+                            <label for="numeroContaOuCpf" class="form-label">Número da Conta ou CPF</label>
+                            <InputText id="numeroContaOuCpf" class="form-control" @bind-Value="loginRequest.NumeroContaOuCpf" placeholder="Digite o número da conta ou CPF" />
+                            <ValidationMessage For="@(() => loginRequest.NumeroContaOuCpf)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="senha" class="form-label">Senha</label>
+                            <InputText type="password" id="senha" class="form-control" @bind-Value="loginRequest.Senha" placeholder="Digite sua senha" />
+                            <ValidationMessage For="@(() => loginRequest.Senha)" />
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary" disabled="@isLoading">
+                                @if (isLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                }
+                                Entrar
+                            </button>
+                        </div>
+                    </EditForm>
+
+                    <hr />
+
+                    <div class="text-center">
+                        <p>Não tem uma conta?</p>
+                        <button class="btn btn-outline-primary" @onclick="NavigateToCadastro">
+                            Criar nova conta
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginRequest loginRequest = new();
+    private string? errorMessage;
+    private string? successMessage;
+    private bool isLoading = false;
+
+    protected override void OnInitialized()
+    {
+        if (AuthService.IsAuthenticated())
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            var response = await AuthService.LoginAsync(loginRequest);
+
+            if (response != null)
+            {
+                successMessage = "Login realizado com sucesso!";
+                await Task.Delay(500);
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                errorMessage = "Credenciais inválidas. Verifique seus dados e tente novamente.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro ao realizar login: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToCadastro()
+    {
+        NavigationManager.NavigateTo("/cadastro");
+    }
+}

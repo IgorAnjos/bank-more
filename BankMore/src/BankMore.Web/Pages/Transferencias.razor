@@ -1,0 +1,237 @@
+@page "/transferencias"
+@using BankMore.Web.Models
+@using BankMore.Web.Services
+@inject TransferenciaService TransferenciaService
+@inject TokenService TokenService
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Transferências - BankMore</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Transferências</h2>
+        </div>
+    </div>
+
+    @if (!isAuthenticated)
+    {
+        <div class="alert alert-warning" role="alert">
+            Você precisa estar autenticado para acessar esta página.
+            <a href="/login" class="alert-link">Fazer login</a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-5 mb-4">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Nova Transferência</h4>
+                    </div>
+                    <div class="card-body">
+                        @if (!string.IsNullOrEmpty(message))
+                        {
+                            <div class="alert @(isSuccess ? "alert-success" : "alert-danger")" role="alert">
+                                @message
+                            </div>
+                        }
+
+                        <EditForm Model="@transferenciaRequest" OnValidSubmit="@RealizarTransferencia">
+                            <DataAnnotationsValidator />
+
+                            <div class="mb-3">
+                                <label for="numeroContaDestino" class="form-label">Número da Conta Destino</label>
+                                <InputNumber id="numeroContaDestino" class="form-control" @bind-Value="transferenciaRequest.NumeroContaDestino" placeholder="Digite o número da conta" />
+                                <ValidationMessage For="@(() => transferenciaRequest.NumeroContaDestino)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="valor" class="form-label">Valor</label>
+                                <InputNumber id="valor" class="form-control" @bind-Value="transferenciaRequest.Valor" placeholder="0,00" />
+                                <ValidationMessage For="@(() => transferenciaRequest.Valor)" />
+                                <small class="form-text text-muted">Taxa de R$ 2,00 será aplicada.</small>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                                    @if (isProcessing)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    }
+                                    Realizar Transferência
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="card shadow">
+                    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Histórico de Transferências</h4>
+                        <button class="btn btn-light btn-sm" @onclick="@(() => CarregarTransferencias())">
+                            <i class="bi bi-arrow-clockwise"></i> Atualizar
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        @if (isLoading)
+                        {
+                            <div class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                            </div>
+                        }
+                        else if (transferencias?.Items?.Any() == true)
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Conta Destino</th>
+                                            <th>Valor</th>
+                                            <th>Tarifa</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var transferencia in transferencias.Items)
+                                        {
+                                            <tr>
+                                                <td>@transferencia.DataTransferencia.ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>@transferencia.NumeroContaDestino</td>
+                                                <td class="text-danger">
+                                                    @transferencia.Valor.ToString("C", new System.Globalization.CultureInfo("pt-BR"))
+                                                </td>
+                                                <td>
+                                                    @transferencia.TarifaAplicada.ToString("C", new System.Globalization.CultureInfo("pt-BR"))
+                                                </td>
+                                                <td>
+                                                    <span class="badge @(transferencia.Status == "Concluída" ? "bg-success" : "bg-warning")">
+                                                        @transferencia.Status
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            @if (transferencias.TotalPages > 1)
+                            {
+                                <nav>
+                                    <ul class="pagination justify-content-center">
+                                        <li class="page-item @(transferencias.HasPrevious ? "" : "disabled")">
+                                            <button class="page-link" @onclick="@(() => CarregarTransferencias(currentPage - 1))" disabled="@(!transferencias.HasPrevious)">
+                                                Anterior
+                                            </button>
+                                        </li>
+                                        <li class="page-item active">
+                                            <span class="page-link">Página @transferencias.Page de @transferencias.TotalPages</span>
+                                        </li>
+                                        <li class="page-item @(transferencias.HasNext ? "" : "disabled")">
+                                            <button class="page-link" @onclick="@(() => CarregarTransferencias(currentPage + 1))" disabled="@(!transferencias.HasNext)">
+                                                Próxima
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center">Nenhuma transferência encontrada.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isAuthenticated = false;
+    private bool isLoading = false;
+    private bool isProcessing = false;
+    private bool isSuccess = false;
+    private string? message;
+    private RealizarTransferenciaRequest transferenciaRequest = new();
+    private PaginatedList<TransferenciaDto>? transferencias;
+    private int currentPage = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await TokenService.InitializeAsync();
+        isAuthenticated = AuthService.IsAuthenticated();
+
+        if (!isAuthenticated)
+        {
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
+
+        await CarregarTransferencias();
+    }
+
+    private async Task CarregarTransferencias(int page = 1)
+    {
+        isLoading = true;
+        try
+        {
+            currentPage = page;
+            transferencias = await TransferenciaService.ListarTransferenciasAsync(page: currentPage);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao carregar transferências: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task RealizarTransferencia()
+    {
+        isProcessing = true;
+        message = null;
+
+        try
+        {
+            transferenciaRequest.ChaveIdempotencia = Guid.CreateVersion7().ToString();
+            var resultado = await TransferenciaService.RealizarTransferenciaAsync(transferenciaRequest);
+
+            if (resultado != null)
+            {
+                isSuccess = true;
+                message = $"Transferência realizada com sucesso! Valor: {resultado.Valor:C}, Tarifa: {resultado.TarifaAplicada:C}";
+                transferenciaRequest = new();
+                
+                await CarregarTransferencias();
+            }
+            else
+            {
+                isSuccess = false;
+                message = "Erro ao realizar transferência. Verifique os dados e tente novamente.";
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            isSuccess = false;
+            message = $"Erro de comunicação: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            isSuccess = false;
+            message = $"Erro ao realizar transferência: {ex.Message}";
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+}

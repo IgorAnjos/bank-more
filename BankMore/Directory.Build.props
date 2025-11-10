@@ -1,0 +1,47 @@
+<Project>
+  <PropertyGroup>
+    <!-- Versão da Solução -->
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    
+    <!-- Informações do Produto -->
+    <Product>BankMore</Product>
+    <Company>BankMore</Company>
+    <Authors>BankMore Team</Authors>
+    <Copyright>Copyright © 2025 BankMore</Copyright>
+    <Description>Sistema Bancário Digital com Arquitetura de Microserviços</Description>
+    
+    <!-- Configurações comuns -->
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    
+    <!-- NuGet Package Settings -->
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/bankmore</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/bankmore/bankmore</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>banking;microservices;kafka;docker</PackageTags>
+  </PropertyGroup>
+
+  <!-- Configurações de Build -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <!-- Analyzer Settings -->
+  <PropertyGroup>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+  </PropertyGroup>
+</Project>

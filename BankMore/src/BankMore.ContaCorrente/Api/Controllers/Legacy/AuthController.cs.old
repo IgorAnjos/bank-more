@@ -1,0 +1,59 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using MediatR;
+using BankMore.ContaCorrente.Application.Commands;
+using BankMore.ContaCorrente.Application.DTOs;
+
+namespace BankMore.ContaCorrente.Api.Controllers;
+
+/// <summary>
+/// Controller para autenticação
+/// </summary>
+[ApiController]
+[Route("api/[controller]")]
+[Produces("application/json")]
+public class AuthController : ControllerBase
+{
+    private readonly IMediator _mediator;
+
+    public AuthController(IMediator mediator)
+    {
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+    }
+
+    /// <summary>
+    /// Efetua login e retorna token JWT
+    /// </summary>
+    /// <param name="request">Credenciais de login</param>
+    /// <returns>Token JWT</returns>
+    /// <response code="200">Login realizado com sucesso</response>
+    /// <response code="401">Credenciais inválidas</response>
+    [HttpPost("login")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErroDto), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginCommand request)
+    {
+        try
+        {
+            var resultado = await _mediator.Send(request);
+            return Ok(resultado);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new ErroDto
+            {
+                Tipo = "USER_UNAUTHORIZED",
+                Mensagem = ex.Message.Replace("USER_UNAUTHORIZED: ", "")
+            });
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(new ErroDto
+            {
+                Tipo = "USER_UNAUTHORIZED",
+                Mensagem = "Credenciais inválidas"
+            });
+        }
+    }
+}

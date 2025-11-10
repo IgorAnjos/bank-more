@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'bankmore-monitor'
+
+scrape_configs:
+  - job_name: 'bankmore-api-conta'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['api-conta:5003']
+        labels:
+          service: 'api-conta'
+          environment: 'development'
+
+  - job_name: 'bankmore-api-transferencia'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['api-transferencia:5004']
+        labels:
+          service: 'api-transferencia'
+          environment: 'development'
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

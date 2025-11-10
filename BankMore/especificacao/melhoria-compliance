@@ -1,0 +1,477 @@
+# Plano de Adequação Regulatória - BankMore
+## Resumo Executivo para Compliance com Banco Central
+
+---
+
+## 📋 ÍNDICE
+1. [Contexto e Obrigações](#contexto)
+2. [Melhorias Implementadas](#melhorias)
+3. [Novos Microsserviços](#microsservicos)
+4. [Fluxos de Compliance](#fluxos)
+5. [Roadmap de Implementação](#roadmap)
+6. [Custos e Recursos](#custos)
+
+---
+
+## 🎯 CONTEXTO E OBRIGAÇÕES {#contexto}
+
+### Obrigações Regulatórias (a partir de 01/12/2025)
+
+#### 1. **Prevenção à Lavagem de Dinheiro (PLD/FT)**
+- ✅ Implementar KYC (Know Your Customer) robusto
+- ✅ Monitoramento transacional em tempo real
+- ✅ Comunicação de operações suspeitas ao COAF em até 24h
+- ✅ Manutenção de registros por 10 anos
+
+#### 2. **e-Financeira (Receita Federal)**
+- ✅ Envio mensal de todas movimentações financeiras
+- ✅ Reportar operações acima de R$ 2.000,00
+- ✅ Formato XML conforme IN RFB nº 1571/2015
+- ✅ Assinatura digital com certificado A1/A3
+
+#### 3. **Basileia III / Resolução CMN**
+- ✅ Controle de capital regulatório
+- ✅ Testes de stress
+- ✅ Relatórios de liquidez
+
+#### 4. **LGPD (Lei Geral de Proteção de Dados)**
+- ✅ Consentimento explícito para tratamento de dados
+- ✅ Direito ao esquecimento
+- ✅ Portabilidade de dados
+- ✅ Nomeação de DPO (Data Protection Officer)
+
+---
+
+## 🚀 MELHORIAS IMPLEMENTADAS {#melhorias}
+
+### 1. **Sistema de KYC com Níveis de Verificação**
+
+| Nível | Requisitos | Limite Diário | Limite Mensal |
+|-------|-----------|---------------|---------------|
+| **Não Verificado** | Apenas CPF | R$ 500 | R$ 1.000 |
+| **Básico** | CPF + Telefone + Email | R$ 2.000 | R$ 5.000 |
+| **Intermediário** | + RG/CNH + Endereço | R$ 10.000 | R$ 20.000 |
+| **Completo** | + Selfie + IR + Análise | R$ 50.000 | R$ 200.000 |
+
+**Funcionalidades:**
+- Validação em tempo real com bureaus de crédito
+- Verificação de listas de PEP e sanções
+- Upload e análise de documentos
+- Reconhecimento facial (liveness)
+
+### 2. **Monitoramento Anti-Fraude em Tempo Real**
+
+**Detecções Implementadas:**
+- ✅ **Smurfing**: Múltiplas transações fracionadas
+- ✅ **Valores Atípicos**: Comparação com histórico
+- ✅ **Horários Suspeitos**: Operações entre 23h-6h
+- ✅ **Frequência Anormal**: Excesso de transações
+- ✅ **Comportamento Atípico**: ML para padrões
+
+**Score de Risco:**
+```
+0-30:  Baixo    → Aprovação automática
+30-60: Médio    → Monitoramento reforçado
+60-80: Alto     → Análise manual obrigatória
+80-100: Crítico → Bloqueio + Comunicação COAF
+```
+
+### 3. **Sistema e-Financeira Automatizado**
+
+**Fluxo Mensal Automatizado:**
+1. **Dia 1**: Coleta de todas transações do mês anterior
+2. **Dia 2**: Geração de arquivo XML
+3. **Dia 3**: Validação contra XSD da RFB
+4. **Dia 4**: Assinatura digital
+5. **Dia 5**: Envio automático para Receita Federal
+6. **Dia 6-10**: Acompanhamento de processamento
+
+**Informações Reportadas:**
+- Dados cadastrais completos dos clientes
+- Todas movimentações (créditos/débitos)
+- Saldos finais de período
+- Operações acima de R$ 2.000
+
+### 4. **Comunicação Automática com COAF**
+
+**Triggers de Comunicação:**
+- Score de risco ≥ 80
+- Valor único ≥ R$ 50.000
+- Soma de valores em 24h ≥ R$ 100.000
+- Detecção de smurfing
+- Cliente em lista de sanções
+
+**Prazo:** Comunicação em até 24 horas
+
+---
+
+## 🏗️ NOVOS MICROSSERVIÇOS {#microsservicos}
+
+### 1. **API Compliance & KYC** (NOVA)
+**Responsabilidades:**
+- Gestão de níveis KYC
+- Validação de documentos
+- Integração com bureaus
+- Controle de limites operacionais
+- Gestão de restrições
+
+**Endpoints Principais:**
+```
+POST   /api/v1/compliance/kyc/solicitar-upgrade
+GET    /api/v1/compliance/cliente/{id}/informacoes
+POST   /api/v1/compliance/documento/upload
+GET    /api/v1/compliance/limites/{idCliente}
+POST   /api/v1/compliance/restricao/aplicar
+```
+
+### 2. **API Monitoramento** (NOVA)
+**Responsabilidades:**
+- Análise de risco em tempo real
+- Detecção de fraudes
+- Score de transações
+- Gestão de alertas
+- Dashboard de compliance
+
+**Endpoints Principais:**
+```
+POST   /api/v1/monitoramento/analisar-transacao
+GET    /api/v1/monitoramento/alertas
+POST   /api/v1/monitoramento/bloquear-transacao
+GET    /api/v1/monitoramento/dashboard
+POST   /api/v1/monitoramento/resolver-alerta/{id}
+```
+
+### 3. **API Regulatório** (NOVA)
+**Responsabilidades:**
+- Geração de relatórios e-Financeira
+- Envio para Receita Federal
+- Relatórios Banco Central
+- Auditoria regulatória
+- Gestão de certificados digitais
+
+**Endpoints Principais:**
+```
+POST   /api/v1/regulatorio/efinanceira/gerar/{ano}/{mes}
+POST   /api/v1/regulatorio/efinanceira/enviar
+GET    /api/v1/regulatorio/efinanceira/status/{id}
+GET    /api/v1/regulatorio/relatorios/bacen
+POST   /api/v1/regulatorio/auditoria/gerar
+```
+
+### 4. **Aplicações Workers** (NOVAS)
+
+#### App Monitoramento Contínuo
+- Consome eventos do Kafka
+- Análise comportamental assíncrona
+- Agregação de padrões
+- Geração de relatórios de risco
+
+#### App e-Financeira
+- Agendamento mensal automático
+- Geração de XMLs
+- Envio automático para RFB
+- Retry em caso de falhas
+
+---
+
+## 📊 FLUXOS DE COMPLIANCE {#fluxos}
+
+### Fluxo 1: Cadastro de Cliente com KYC
+
+```
+1. Cliente solicita abertura de conta
+   ↓
+2. Validação básica de CPF
+   ↓
+3. Consulta em bureaus (Serasa, SPC)
+   ↓
+4. Verificação de PEP e sanções
+   ↓
+5. Criação de conta com Nível Básico
+   ↓
+6. Notificação para completar KYC
+   ↓
+7. Cliente envia documentos
+   ↓
+8. Análise automatizada + manual
+   ↓
+9. Upgrade de nível e limites
+```
+
+### Fluxo 2: Transação com Monitoramento
+
+```
+1. Cliente solicita transferência
+   ↓
+2. Validação de autenticação (JWT)
+   ↓
+3. Verificação de limites (API Compliance)
+   ↓
+4. Análise de risco em tempo real
+   ├─→ Score < 30: Aprova
+   ├─→ Score 30-60: Aprova + Monitora
+   ├─→ Score 60-80: Análise Manual
+   └─→ Score ≥ 80: Bloqueia + COAF
+   ↓
+5. Execução da transação
+   ↓
+6. Registro para e-Financeira (se > R$ 2k)
+   ↓
+7. Publicação no Kafka
+   ↓
+8. Processamento de tarifa (se aplicável)
+```
+
+### Fluxo 3: Detecção e Comunicação COAF
+
+```
+1. Sistema detecta operação suspeita
+   ↓
+2. Geração de alerta no dashboard
+   ↓
+3. Analista de compliance revisa
+   ↓
+4. Se confirmado suspeito:
+   ├─→ Bloqueio preventivo da conta
+   ├─→ Congelamento de saldo
+   └─→ Geração de relatório COAF
+   ↓
+5. Envio automático para COAF
+   ↓
+6. Aguarda investigação
+   ↓
+7. Ação conforme orientação COAF
+```
+
+---
+
+## 🗓️ ROADMAP DE IMPLEMENTAÇÃO {#roadmap}
+
+### FASE 1: FUNDAÇÃO (Semanas 1-4)
+**Prioridade: CRÍTICA**
+
+✅ Implementar API Compliance base
+✅ Sistema KYC com 4 níveis
+✅ Validação CPF em tempo real
+✅ Integração com Serasa/SPC
+✅ Controle de limites operacionais
+
+**Entregáveis:**
+- API Compliance funcional
+- Banco de dados de clientes
+- Integração com bureaus
+- Testes unitários (>80% cobertura)
+
+### FASE 2: MONITORAMENTO (Semanas 5-8)
+**Prioridade: CRÍTICA**
+
+✅ API Monitoramento implementada
+✅ Score de risco em tempo real
+✅ Detecção de smurfing
+✅ Análise comportamental
+✅ Dashboard de alertas
+
+**Entregáveis:**
+- Motor de análise de risco
+- Regras de detecção configuráveis
+- Interface de gerenciamento
+- Testes de integração
+
+### FASE 3: REGULATÓRIO (Semanas 9-12)
+**Prioridade: ALTA**
+
+✅ API Regulatório implementada
+✅ Geração de e-Financeira
+✅ Assinatura digital
+✅ Envio automático para RFB
+✅ Comunicação com COAF
+
+**Entregáveis:**
+- Gerador de XML e-Financeira
+- Integração com webservices RFB
+- Sistema de certificados digitais
+- Testes de envio em homologação
+
+### FASE 4: OTIMIZAÇÃO (Semanas 13-16)
+**Prioridade: MÉDIA**
+
+✅ Cache estratégico (Redis)
+✅ Machine Learning para fraudes
+✅ Dashboards executivos
+✅ Relatórios customizados
+✅ Auditoria completa
+
+**Entregáveis:**
+- Performance otimizada
+- ML model treinado
+- Dashboards em Grafana
+- Documentação completa
+
+---
+
+## 💰 CUSTOS E RECURSOS {#custos}
+
+### Investimento em Infraestrutura
+
+| Item | Custo Mensal | Justificativa |
+|------|--------------|---------------|
+| **Servidores Cloud** | R$ 8.000 | Kubernetes com HA |
+| **Kafka Cluster** | R$ 3.000 | 3 brokers + monitoring |
+| **Redis Cache** | R$ 1.500 | Alta disponibilidade |
+| **Storage** | R$ 2.000 | Documentos + logs |
+| **Certificados Digitais** | R$ 500 | A1/A3 para RFB |
+| **Serviços Externos** | R$ 5.000 | Serasa, Bureaus, APIs |
+| **Monitoramento** | R$ 1.000 | Grafana, Prometheus |
+| **TOTAL MENSAL** | **R$ 21.000** | |
+
+### Equipe Necessária
+
+| Cargo | Qtd | Salário Médio | Total Mensal |
+|-------|-----|---------------|--------------|
+| **Arquiteto de Soluções** | 1 | R$ 18.000 | R$ 18.000 |
+| **Desenvolvedores Backend** | 3 | R$ 12.000 | R$ 36.000 |
+| **Analista de Compliance** | 2 | R$ 8.000 | R$ 16.000 |
+| **DevOps Engineer** | 1 | R$ 14.000 | R$ 14.000 |
+| **QA Engineer** | 1 | R$ 8.000 | R$ 8.000 |
+| **DPO (LGPD)** | 1 | R$ 10.000 | R$ 10.000 |
+| **TOTAL EQUIPE** | 9 | | **R$ 102.000** |
+
+### Investimento Total
+
+```
+Infraestrutura:  R$ 21.000/mês
+Equipe:         R$ 102.000/mês
+Contingência:    R$ 15.000/mês (12%)
+─────────────────────────────────
+TOTAL:          R$ 138.000/mês
+```
+
+**Investimento Inicial (Setup):** R$ 80.000
+- Licenças de software
+- Certificados digitais
+- Treinamentos
+- Consultorias especializadas
+
+---
+
+## 📈 BENEFÍCIOS ESPERADOS
+
+### Quantitativos
+- ✅ **100% de conformidade** com BC e RFB
+- ✅ **Redução de 80%** em fraudes
+- ✅ **Zero multas** regulatórias
+- ✅ **Aumento de 40%** na confiança do cliente
+
+### Qualitativos
+- ✅ Reputação de mercado fortalecida
+- ✅ Acesso a linhas de crédito regulatórias
+- ✅ Diferencial competitivo
+- ✅ Preparação para IPO futuro
+
+---
+
+## ⚠️ RISCOS E MITIGAÇÕES
+
+### Risco 1: Prazo Apertado
+**Probabilidade:** Alta  
+**Impacto:** Crítico  
+**Mitigação:**
+- Priorizar Fases 1 e 2
+- Contratar consultoria especializada
+- Trabalho em sprints de 2 semanas
+
+### Risco 2: Integrações Externas
+**Probabilidade:** Média  
+**Impacto:** Alto  
+**Mitigação:**
+- Ambiente de testes/homologação
+- Fallback para processos manuais
+- SLA com fornecedores
+
+### Risco 3: Mudanças Regulatórias
+**Probabilidade:** Média  
+**Impacto:** Médio  
+**Mitigação:**
+- Arquitetura flexível
+- Monitoramento de legislação
+- Parceria com escritório jurídico
+
+---
+
+## 🎯 PRÓXIMOS PASSOS IMEDIATOS
+
+### Semana 1
+1. ✅ Aprovação do plano pela diretoria
+2. ✅ Contratação de consultoria jurídica
+3. ✅ Setup do ambiente de desenvolvimento
+4. ✅ Início do desenvolvimento da API Compliance
+
+### Semana 2
+1. ✅ Contratação de Analistas de Compliance
+2. ✅ Integração com Serasa/SPC
+3. ✅ Desenvolvimento do sistema KYC
+4. ✅ Testes iniciais
+
+### Semana 3
+1. ✅ Implementação da API Monitoramento
+2. ✅ Desenvolvimento do motor de risco
+3. ✅ Integração com APIs existentes
+4. ✅ Testes de carga
+
+### Semana 4
+1. ✅ Deploy em ambiente de homologação
+2. ✅ Testes de integração completos
+3. ✅ Treinamento da equipe
+4. ✅ Preparação para Fase 2
+
+---
+
+## 📞 CONTATOS IMPORTANTES
+
+**Banco Central:**
+- SAC: 0800-702-0245
+- Email: sac@bcb.gov.br
+
+**Receita Federal (e-Financeira):**
+- Central: 0800-729-0722
+- Email: efinanceira@rfb.gov.br
+
+**COAF:**
+- Tel: (61) 2025-7700
+- Email: coaf@fazenda.gov.br
+
+---
+
+## 📚 REFERÊNCIAS LEGAIS
+
+1. **Lei nº 9.613/1998** - Lei de Lavagem de Dinheiro
+2. **IN RFB nº 1571/2015** - e-Financeira
+3. **Circular BCB nº 3.978/2020** - PLD/FT
+4. **Lei nº 13.709/2018** - LGPD
+5. **Resolução CMN nº 4.892/2021** - Basileia III
+
+---
+
+**Documento elaborado em:** Novembro/2025  
+**Validade:** 90 dias  
+**Próxima Revisão:** Fevereiro/2026
+
+---
+
+## ✅ CHECKLIST DE COMPLIANCE
+
+- [ ] Sistema KYC implementado
+- [ ] Monitoramento em tempo real ativo
+- [ ] Integração com COAF configurada
+- [ ] e-Financeira automatizado
+- [ ] LGPD em conformidade
+- [ ] Certificados digitais adquiridos
+- [ ] Equipe de compliance contratada
+- [ ] Políticas e procedimentos documentados
+- [ ] Testes de segurança aprovados
+- [ ] Auditoria externa realizada
+- [ ] Homologação com BC concluída
+
+---
+
+*Este documento é confidencial e destinado exclusivamente ao uso interno da BankMore Instituição de Pagamento S.A.*

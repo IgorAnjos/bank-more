@@ -1,0 +1,246 @@
+services:
+  # Zookeeper - Necessário para o Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: banco-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - banco-network
+    healthcheck:
+      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kafka Broker
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: banco-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    networks:
+      - banco-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # Redis - Para Idempotência
+  redis:
+    image: redis:7-alpine
+    container_name: banco-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    networks:
+      - banco-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis-data:/data
+
+  # Seq - Agregação de Logs
+  seq:
+    image: datalust/seq:latest
+    container_name: banco-seq
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - "5341:80"
+    networks:
+      - banco-network
+    volumes:
+      - seq-data:/data
+    restart: unless-stopped
+
+  # Prometheus - Coleta de Métricas
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: banco-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    networks:
+      - banco-network
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+
+  # Grafana - Visualização de Métricas
+  grafana:
+    image: grafana/grafana:latest
+    container_name: banco-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "3000:3000"
+    networks:
+      - banco-network
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # API Conta Corrente
+  api-conta:
+    build:
+      context: .
+      dockerfile: src/BankMore.ContaCorrente/Dockerfile
+    container_name: bankmore-api-conta
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      seq:
+        condition: service_started
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5003
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/contacorrente.db
+      - JwtSettings__SecretKey=BankMore-Super-Secret-JWT-Key-With-Minimum-32-Characters-For-Docker-Security!
+      - JwtSettings__Issuer=BankMore
+      - JwtSettings__Audience=BankMore
+      - JwtSettings__AccessTokenExpirationMinutes=10
+      - JwtSettings__RefreshTokenExpirationDays=1
+      - EncryptionKey=BankMore-Secret-Key-2024-Minimum32Characters!
+      - Redis__ConnectionString=redis:6379
+      - Kafka__BootstrapServers=kafka:29092
+      - Kafka__ClientId=bankmore-contacorrente
+      - Idempotency__RetentionHours=24
+      - Serilog__WriteTo__0__Name=Seq
+      - Serilog__WriteTo__0__Args__serverUrl=http://seq:80
+    ports:
+      - "5003:5003"
+    volumes:
+      - conta-data:/app/data
+    networks:
+      - banco-network
+    restart: unless-stopped
+
+  # API Transferência
+  api-transferencia:
+    build:
+      context: .
+      dockerfile: src/BankMore.Transferencia/Dockerfile
+    container_name: bankmore-api-transferencia
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api-conta:
+        condition: service_started
+      seq:
+        condition: service_started
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5004
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/transferencia.db
+      - JwtSettings__SecretKey=BankMore-Super-Secret-JWT-Key-With-Minimum-32-Characters-For-Docker-Security!
+      - JwtSettings__Issuer=BankMore
+      - JwtSettings__Audience=BankMore
+      - ApiContaCorrente__BaseUrl=http://api-conta:5003
+      - Redis__ConnectionString=redis:6379
+      - Kafka__BootstrapServers=kafka:29092
+      - Kafka__ClientId=bankmore-transferencia
+      - Tarifa__ValorTransferencia=2.00
+      - Idempotency__RetentionHours=24
+      - Serilog__WriteTo__0__Name=Seq
+      - Serilog__WriteTo__0__Args__serverUrl=http://seq:80
+    ports:
+      - "5004:5004"
+    volumes:
+      - transferencia-data:/app/data
+    networks:
+      - banco-network
+    restart: unless-stopped
+
+  # Worker Service Tarifas
+  worker-tarifas:
+    build:
+      context: .
+      dockerfile: src/BankMore.Tarifas/Dockerfile
+    container_name: bankmore-worker-tarifas
+    depends_on:
+      kafka:
+        condition: service_healthy
+      api-conta:
+        condition: service_started
+      seq:
+        condition: service_started
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/tarifas.db
+      - Kafka__BootstrapServers=kafka:29092
+      - Kafka__GroupId=tarifas-consumer-group
+      - Kafka__Topic=transferencias-realizadas
+      - ApiContaCorrente__BaseUrl=http://api-conta:5003
+      - Serilog__WriteTo__0__Name=Seq
+      - Serilog__WriteTo__0__Args__serverUrl=http://seq:80
+    volumes:
+      - tarifas-data:/app/data
+    networks:
+      - banco-network
+    restart: unless-stopped
+
+  # Blazor Web App
+  web:
+    build:
+      context: .
+      dockerfile: src/BankMore.Web/Dockerfile
+    container_name: bankmore-web
+    depends_on:
+      - api-conta
+      - api-transferencia
+    ports:
+      - "5000:80"
+    networks:
+      - banco-network
+    restart: unless-stopped
+
+networks:
+  banco-network:
+    driver: bridge
+
+volumes:
+  conta-data:
+    driver: local
+  transferencia-data:
+    driver: local
+  tarifas-data:
+    driver: local
+  redis-data:
+    driver: local
+  seq-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
