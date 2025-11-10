@@ -1,696 +1,1390 @@
-# 🏦 BankMore - Sistema Bancário Completo# BankMore - Sistema Bancário Completo
+# 🏦 BankMore - Sistema Bancário Digital# 🏦 BankMore - Sistema Bancário Completo# BankMore - Sistema Bancário Completo
 
 
 
-Sistema bancário digital com **arquitetura de microsserviços**, **comunicação assíncrona via Kafka**, **processamento de tarifas em tempo real**, **interface web moderna com Blazor WebAssembly** e **observabilidade completa** (Serilog + Seq + Prometheus + Grafana).Sistema bancário com arquitetura de microsserviços, comunicação assíncrona via Kafka, processamento de tarifas em tempo real e interface web moderna com Blazor WebAssembly.
+[![.NET](https://img.shields.io/badge/.NET-9.0-purple?logo=dotnet)](https://dotnet.microsoft.com/)
 
+[![Blazor](https://img.shields.io/badge/Blazor-WebAssembly-blueviolet?logo=blazor)](https://blazor.net/)
 
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](https://www.docker.com/)Sistema bancário digital com **arquitetura de microsserviços**, **comunicação assíncrona via Kafka**, **processamento de tarifas em tempo real**, **interface web moderna com Blazor WebAssembly** e **observabilidade completa** (Serilog + Seq + Prometheus + Grafana).Sistema bancário com arquitetura de microsserviços, comunicação assíncrona via Kafka, processamento de tarifas em tempo real e interface web moderna com Blazor WebAssembly.
+
+[![Kafka](https://img.shields.io/badge/Kafka-4.0-black?logo=apache-kafka)](https://kafka.apache.org/)
+
+[![Tests](https://img.shields.io/badge/Tests-70%20passing-brightgreen?logo=xunit)](tests/)
+
+[![License](https://img.shields.io/badge/License-Educational-yellow)](LICENSE)
 
 ---## 🏗️ Arquitetura
 
+Sistema bancário completo com **arquitetura de microsserviços**, **comunicação assíncrona via Kafka**, **processamento de tarifas em tempo real**, **interface web moderna com Blazor WebAssembly** e **observabilidade completa** (Serilog + Seq + Prometheus + Grafana).
 
+
+
+---
 
 ## 📑 Índice```
 
+## 📑 Índice
+
 ┌─────────────────────┐
 
-- [Arquitetura](#-arquitetura)│   Blazor WebAssembly│
+- [🎯 Visão Geral](#-visão-geral)
 
-- [Tecnologias](#-tecnologias)│   (Interface Web)   │
+- [🏗️ Arquitetura](#️-arquitetura)- [Arquitetura](#-arquitetura)│   Blazor WebAssembly│
 
-- [Funcionalidades](#-funcionalidades)│    Port: 5000       │
+- [🚀 Tecnologias](#-tecnologias)
 
-- [Pré-requisitos](#-pré-requisitos)└──────────┬──────────┘
+- [✨ Funcionalidades](#-funcionalidades)- [Tecnologias](#-tecnologias)│   (Interface Web)   │
 
-- [Como Executar](#-como-executar-com-docker)           │ HTTP/JWT
+- [📋 Pré-requisitos](#-pré-requisitos)
 
-- [Estrutura do Projeto](#-estrutura-do-projeto)           ├──────────────────────┐
+- [🐋 Como Executar](#-como-executar-com-docker)- [Funcionalidades](#-funcionalidades)│    Port: 5000       │
 
-- [Observabilidade](#-observabilidade)           ▼                      ▼
+- [🧪 Testes](#-testes)
 
-- [Testes](#-testes)┌─────────────────┐      HTTP      ┌──────────────────────┐
+- [📊 Observabilidade](#-observabilidade)- [Pré-requisitos](#-pré-requisitos)└──────────┬──────────┘
 
-- [APIs Disponíveis](#-apis-disponíveis)│   API Conta     │ ◄───────────── │ API Transferência    │
+- [🌐 APIs Disponíveis](#-apis-disponíveis)
 
-- [Troubleshooting](#-troubleshooting)│   Corrente      │                │                      │
+- [🗂️ Estrutura do Projeto](#️-estrutura-do-projeto)- [Como Executar](#-como-executar-com-docker)           │ HTTP/JWT
 
-│  (EF Core)      │                │     (Dapper)         │
+- [🐛 Troubleshooting](#-troubleshooting)
 
----│  Port: 5003     │                │    Port: 5004        │
+- [🤝 Contribuindo](#-contribuindo)- [Estrutura do Projeto](#-estrutura-do-projeto)           ├──────────────────────┐
 
-└─────────────────┘                └──────────────────────┘
 
-## 🏗️ Arquitetura        ▲                                    │
 
-        │                                    │ publish
+---- [Observabilidade](#-observabilidade)           ▼                      ▼
 
-```        │ HTTP (débito tarifa)               ▼
 
-┌─────────────────────────────────────────────────────────────┐        │                          ┌─────────────────────┐
 
-│                    CAMADA DE APRESENTAÇÃO                   │┌───────┴──────────┐               │   Kafka Topic:      │
+## 🎯 Visão Geral- [Testes](#-testes)┌─────────────────┐      HTTP      ┌──────────────────────┐
 
-│                                                               ││  Worker Tarifas  │ ◄─────────── │ transferencias-     │
 
-│  ┌─────────────────────┐      ┌─────────────────────────┐   ││   (Consumer)     │   consume     │    realizadas       │
 
-│  │  Blazor WebAssembly │      │     Swagger/OpenAPI     │   │└──────────────────┘               └─────────────────────┘
+O **BankMore** é um sistema bancário digital moderno desenvolvido para demonstrar práticas avançadas de desenvolvimento de software, incluindo:- [APIs Disponíveis](#-apis-disponíveis)│   API Conta     │ ◄───────────── │ API Transferência    │
 
-│  │   (Interface Web)   │      │   (Documentação APIs)   │   │```
 
-│  │    Port: 8080       │      │   Ports: 5003/5004      │   │
 
-│  └──────────┬──────────┘      └─────────────────────────┘   │### Componentes
+- **Arquitetura de Microsserviços** com segregação de responsabilidades- [Troubleshooting](#-troubleshooting)│   Corrente      │                │                      │
 
-└─────────────┼──────────────────────────────────────────────┘
+- **Event-Driven Architecture** com Apache Kafka
 
-              │ HTTP/REST + JWT1. **Interface Web Blazor** (`BankMore.Web`) 🆕
+- **CQRS Pattern** com MediatR│  (EF Core)      │                │     (Dapper)         │
 
-┌─────────────┼──────────────────────────────────────────────┐   - Interface de usuário moderna com Blazor WebAssembly
+- **Observabilidade Completa** (Logs, Métricas, Health Checks)
 
-│             │          CAMADA DE SERVIÇOS                   │   - Autenticação JWT com LocalStorage
+- **Segurança Robusta** (JWT, BCrypt, AES-256)---│  Port: 5003     │                │    Port: 5004        │
 
-│             ├──────────────────────┐                        │   - Funcionalidades: Login, Cadastro, Consulta de Conta, Movimentações e Transferências
+- **Testes Abrangentes** (Unitários + E2E)
 
-│             ▼                      ▼                        │   - Design responsivo com Bootstrap 5
+- **Containerização** com Docker Compose└─────────────────┘                └──────────────────────┘
 
-│   ┌─────────────────┐      ┌──────────────────────┐        │
 
-│   │   API Conta     │◄────►│ API Transferência    │        │2. **API Conta Corrente** (`BankMore.ContaCorrente`)
 
-│   │   Corrente      │ HTTP │                      │        │   - Gerencia contas, autenticação (JWT), movimentações e saldo
+### 📊 Estatísticas do Projeto## 🏗️ Arquitetura        ▲                                    │
 
-│   │  (EF Core)      │      │     (Dapper)         │        │   - Entity Framework Core + SQLite
 
-│   │  Port: 5003     │      │    Port: 5004        │        │   - RESTful com HATEOAS, versionamento e Problem Details
 
-│   └────────┬────────┘      └──────────┬───────────┘        │   - CORS habilitado para frontend
+```        │                                    │ publish
 
-└────────────┼────────────────────────────┼──────────────────┘
+📦 3 Microsserviços            🧪 70 Testes (41 Unit + 29 E2E)
 
-             │                            │3. **API Transferência** (`BankMore.Transferencia`)
+🌐 1 Frontend Blazor           📄 80.000+ linhas de código```        │ HTTP (débito tarifa)               ▼
 
-             │ HTTP (débito tarifa)       │ publish event   - Processa transferências entre contas com rollback automático
+🐋 10 Containers Docker        📚 10.000+ linhas de documentação
 
-             │                            ▼   - Dapper (raw SQL) + SQLite
+📨 1 Message Queue (Kafka)     ⚡ 95%+ de cobertura de testes┌─────────────────────────────────────────────────────────────┐        │                          ┌─────────────────────┐
 
-┌────────────┼────────────────────────────────────────────────┐   - Kafka Producer: publica eventos de transferências realizadas
+🔍 3 Ferramentas Observabilidade
 
-│            │             MENSAGERIA                          │   - Integração HTTP com API Conta Corrente
+```│                    CAMADA DE APRESENTAÇÃO                   │┌───────┴──────────┐               │   Kafka Topic:      │
 
-│            │      ┌─────────────────────────┐               │   - CORS habilitado para frontend
+
+
+---│                                                               ││  Worker Tarifas  │ ◄─────────── │ transferencias-     │
+
+
+
+## 🏗️ Arquitetura│  ┌─────────────────────┐      ┌─────────────────────────┐   ││   (Consumer)     │   consume     │    realizadas       │
+
+
+
+### Diagrama Geral│  │  Blazor WebAssembly │      │     Swagger/OpenAPI     │   │└──────────────────┘               └─────────────────────┘
+
+
+
+```│  │   (Interface Web)   │      │   (Documentação APIs)   │   │```
+
+┌──────────────────────────────────────────────────────────────────┐
+
+│                     CAMADA DE APRESENTAÇÃO                       ││  │    Port: 8080       │      │   Ports: 5003/5004      │   │
+
+│                                                                  │
+
+│  ┌─────────────────────┐       ┌──────────────────────────┐    ││  └──────────┬──────────┘      └─────────────────────────┘   │### Componentes
+
+│  │  Blazor WebAssembly │       │    Swagger/OpenAPI       │    │
+
+│  │   (Interface Web)   │       │  (Documentação APIs)     │    │└─────────────┼──────────────────────────────────────────────┘
+
+│  │    Port: 8080       │       │   Ports: 5003/5004       │    │
+
+│  └──────────┬──────────┘       └──────────────────────────┘    │              │ HTTP/REST + JWT1. **Interface Web Blazor** (`BankMore.Web`) 🆕
+
+└─────────────┼────────────────────────────────────────────────────┘
+
+              │ HTTP/REST + JWT┌─────────────┼──────────────────────────────────────────────┐   - Interface de usuário moderna com Blazor WebAssembly
+
+┌─────────────┼────────────────────────────────────────────────────┐
+
+│             │             CAMADA DE SERVIÇOS                     ││             │          CAMADA DE SERVIÇOS                   │   - Autenticação JWT com LocalStorage
+
+│             ├────────────────────────┐                           │
+
+│             ▼                        ▼                           ││             ├──────────────────────┐                        │   - Funcionalidades: Login, Cadastro, Consulta de Conta, Movimentações e Transferências
+
+│   ┌─────────────────┐        ┌──────────────────────┐           │
+
+│   │   API Conta     │◄──────►│ API Transferência    │           ││             ▼                      ▼                        │   - Design responsivo com Bootstrap 5
+
+│   │   Corrente      │  HTTP  │                      │           │
+
+│   │  (EF Core)      │        │     (Dapper)         │           ││   ┌─────────────────┐      ┌──────────────────────┐        │
+
+│   │  Port: 5003     │        │    Port: 5004        │           │
+
+│   └────────┬────────┘        └──────────┬───────────┘           ││   │   API Conta     │◄────►│ API Transferência    │        │2. **API Conta Corrente** (`BankMore.ContaCorrente`)
+
+└────────────┼──────────────────────────────┼─────────────────────┘
+
+             │                              ││   │   Corrente      │ HTTP │                      │        │   - Gerencia contas, autenticação (JWT), movimentações e saldo
+
+             │ HTTP (débito tarifa)         │ publish event
+
+             │                              ▼│   │  (EF Core)      │      │     (Dapper)         │        │   - Entity Framework Core + SQLite
+
+┌────────────┼──────────────────────────────────────────────────────┐
+
+│            │                  MENSAGERIA                           ││   │  Port: 5003     │      │    Port: 5004        │        │   - RESTful com HATEOAS, versionamento e Problem Details
+
+│            │         ┌─────────────────────────┐                  │
+
+│            │         │   Apache Kafka          │                  ││   └────────┬────────┘      └──────────┬───────────┘        │   - CORS habilitado para frontend
+
+│            │         │   Topic: transferencias-│                  │
+
+│            │         │        realizadas       │                  │└────────────┼────────────────────────────┼──────────────────┘
+
+│            │         │    Port: 9092           │                  │
+
+│            │         └──────────┬──────────────┘                  │             │                            │3. **API Transferência** (`BankMore.Transferencia`)
+
+└────────────┼────────────────────┼───────────────────────────────┘
+
+             │                    │ consume             │ HTTP (débito tarifa)       │ publish event   - Processa transferências entre contas com rollback automático
+
+             │                    ▼
+
+┌────────────┼────────────────────────────────────────────────────┐             │                            ▼   - Dapper (raw SQL) + SQLite
+
+│            │          CAMADA DE PROCESSAMENTO                   │
+
+│            │         ┌──────────────────┐                       │┌────────────┼────────────────────────────────────────────────┐   - Kafka Producer: publica eventos de transferências realizadas
+
+│            └────────►│  Worker Tarifas  │                       │
+
+│                      │   (Background    │                       ││            │             MENSAGERIA                          │   - Integração HTTP com API Conta Corrente
+
+│                      │    Service)      │                       │
+
+│                      └──────────────────┘                       ││            │      ┌─────────────────────────┐               │   - CORS habilitado para frontend
+
+└─────────────────────────────────────────────────────────────────┘
 
 │            │      │   Apache Kafka          │               │
 
-│            │      │   Topic: transferencias-│               │4. **Worker Tarifas** (`BankMore.Tarifas`)
+┌─────────────────────────────────────────────────────────────────┐
 
-│            │      │        realizadas       │               │   - Background Service que consome eventos do Kafka
+│                    CAMADA DE DADOS (SQLite)                     ││            │      │   Topic: transferencias-│               │4. **Worker Tarifas** (`BankMore.Tarifas`)
 
-│            │      │    Port: 9092           │               │   - Persiste tarifas no banco de dados
+│                                                                 │
 
-│            │      └──────────┬──────────────┘               │   - Debita automaticamente tarifas na conta origem
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         ││            │      │        realizadas       │               │   - Background Service que consome eventos do Kafka
 
-└────────────┼─────────────────┼──────────────────────────────┘   - Idempotência garantida por `idtransferencia`
+│  │contacorrente │  │transferencia │  │   tarifas    │         │
 
-             │                 │ consume
+│  │     .db      │  │     .db      │  │     .db      │         ││            │      │    Port: 9092           │               │   - Persiste tarifas no banco de dados
 
-             │                 ▼## 🚀 Como Executar
+│  └──────────────┘  └──────────────┘  └──────────────┘         │
 
-┌────────────┼─────────────────────────────────────────────────┐
-
-│            │       CAMADA DE PROCESSAMENTO                   │### Opção 1: Script Automático (Recomendado) ⚡
-
-│            │      ┌──────────────────┐                       │
-
-│            └─────►│  Worker Tarifas  │                       │Execute o script PowerShell que inicia todos os serviços automaticamente:
-
-│                   │   (Background    │                       │
-
-│                   │    Service)      │                       │```powershell
-
-│                   └──────────────────┘                       │cd c:\GitHub\Teste\BankMore
-
-└──────────────────────────────────────────────────────────────┘.\start-all.ps1
-
-```
-
-┌──────────────────────────────────────────────────────────────┐
-
-│                CAMADA DE DADOS (SQLite)                      │O script irá:
-
-│                                                               │1. Iniciar API Conta Corrente (porta 5003)
-
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │2. Iniciar API Transferência (porta 5004)
-
-│  │contacorrente │  │transferencia │  │   tarifas    │       │3. Iniciar Interface Web (porta 5000/5001)
-
-│  │     .db      │  │     .db      │  │     .db      │       │4. Abrir o navegador automaticamente
-
-│  └──────────────┘  └──────────────┘  └──────────────┘       │
-
-└──────────────────────────────────────────────────────────────┘### Opção 2: Manual (3 Terminais)
+└─────────────────────────────────────────────────────────────────┘│            │      └──────────┬──────────────┘               │   - Debita automaticamente tarifas na conta origem
 
 
 
-┌──────────────────────────────────────────────────────────────┐#### Terminal 1 - API Conta Corrente
+┌─────────────────────────────────────────────────────────────────┐└────────────┼─────────────────┼──────────────────────────────┘   - Idempotência garantida por `idtransferencia`
 
-│              CAMADA DE OBSERVABILIDADE                       │```powershell
+│                CAMADA DE OBSERVABILIDADE                        │
 
-│                                                               │cd src\BankMore.ContaCorrente\Api
+│                                                                 │             │                 │ consume
 
-│  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌────────────┐   │dotnet run
+│  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌────────────┐     │
 
-│  │ Serilog │─►│   Seq    │  │Prometheus│─►│  Grafana   │   │```
+│  │ Serilog │─►│   Seq    │  │Prometheus│─►│  Grafana   │     │             │                 ▼## 🚀 Como Executar
 
-│  │  Logs   │  │ (5341)   │  │  (9090)  │  │   (3000)   │   │
+│  │  Logs   │  │ (5341)   │  │  (9090)  │  │   (3000)   │     │
 
-│  └─────────┘  └──────────┘  └──────────┘  └────────────┘   │#### Terminal 2 - API Transferência
+│  └─────────┘  └──────────┘  └──────────┘  └────────────┘     │┌────────────┼─────────────────────────────────────────────────┐
 
-└──────────────────────────────────────────────────────────────┘```powershell
+└─────────────────────────────────────────────────────────────────┘
 
-```cd src\BankMore.Transferencia\Api
-
-dotnet run
-
-### 📦 Componentes```
+```│            │       CAMADA DE PROCESSAMENTO                   │### Opção 1: Script Automático (Recomendado) ⚡
 
 
 
-| Componente | Tecnologia | Porta | Descrição |#### Terminal 3 - Interface Web
+### 📦 Componentes│            │      ┌──────────────────┐                       │
 
-|------------|-----------|-------|-----------|```powershell
 
-| **Blazor Web** | WebAssembly | 8080 | Interface de usuário moderna e responsiva |cd src\BankMore.Web
 
-| **API Conta** | ASP.NET Core + EF Core | 5003 | Gerencia contas, auth JWT, movimentações |dotnet run
+| Componente | Tecnologia | Porta | Descrição |│            └─────►│  Worker Tarifas  │                       │Execute o script PowerShell que inicia todos os serviços automaticamente:
 
-| **API Transferência** | ASP.NET Core + Dapper | 5004 | Processa transferências com rollback |```
+|------------|-----------|-------|-----------|
+
+| **Blazor Web** | WebAssembly | 8080 | Interface de usuário moderna e responsiva |│                   │   (Background    │                       │
+
+| **API Conta** | ASP.NET Core + EF Core | 5003 | Gerencia contas, autenticação JWT, movimentações |
+
+| **API Transferência** | ASP.NET Core + Dapper | 5004 | Processa transferências com rollback automático |│                   │    Service)      │                       │```powershell
 
 | **Worker Tarifas** | Background Service | - | Consome eventos Kafka e debita tarifas |
 
-| **Kafka** | Apache Kafka | 9092 | Mensageria assíncrona |### Acessar o Sistema
+| **Kafka** | Apache Kafka | 9092 | Mensageria assíncrona |│                   └──────────────────┘                       │cd c:\GitHub\Teste\BankMore
 
 | **Zookeeper** | Apache Zookeeper | 2181 | Coordenação do Kafka |
 
-| **Redis** | Redis Cache | 6379 | Idempotência e cache distribuído |- **🌐 Interface Web**: http://localhost:5000 ou https://localhost:5001
+| **Redis** | Redis Cache | 6379 | Idempotência e cache distribuído |└──────────────────────────────────────────────────────────────┘.\start-all.ps1
 
-| **Seq** | Seq Logs | 5341 | Agregação e visualização de logs |- **📖 Swagger Conta**: http://localhost:5003
+| **Seq** | Seq Logs | 5341 | Agregação e visualização de logs |
 
-| **Prometheus** | Prometheus | 9090 | Coleta de métricas |- **📖 Swagger Transferência**: http://localhost:5004
+| **Prometheus** | Prometheus | 9090 | Coleta de métricas |```
 
 | **Grafana** | Grafana | 3000 | Dashboards e visualizações |
 
-## 📘 Documentação
+┌──────────────────────────────────────────────────────────────┐
 
 ---
 
-- **[Guia de Execução Web](GUIA-EXECUCAO-WEB.md)**: Tutorial completo com fluxo de teste
+│                CAMADA DE DADOS (SQLite)                      │O script irá:
 
-## 🚀 Tecnologias- **[README da Interface Web](src/BankMore.Web/README.md)**: Documentação específica do frontend
+## 🚀 Tecnologias
+
+│                                                               │1. Iniciar API Conta Corrente (porta 5003)
+
+### Backend
+
+- **.NET 9.0** - Framework principal│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │2. Iniciar API Transferência (porta 5004)
+
+- **ASP.NET Core** - APIs RESTful
+
+- **Entity Framework Core 9.0.10** - ORM para API Conta│  │contacorrente │  │transferencia │  │   tarifas    │       │3. Iniciar Interface Web (porta 5000/5001)
+
+- **Dapper 2.1.66** - Micro-ORM para API Transferência
+
+- **MediatR 13.1.0** - CQRS pattern│  │     .db      │  │     .db      │  │     .db      │       │4. Abrir o navegador automaticamente
+
+- **KafkaFlow 4.0.1** - Cliente Kafka
+
+- **BCrypt.Net 4.0.3** - Hashing de senhas│  └──────────────┘  └──────────────┘  └──────────────┘       │
+
+- **SQLite** - Banco de dados
+
+└──────────────────────────────────────────────────────────────┘### Opção 2: Manual (3 Terminais)
+
+### Frontend
+
+- **Blazor WebAssembly** - SPA client-side
+
+- **Bootstrap 5** - UI responsiva
+
+- **HttpClient** - Comunicação com APIs┌──────────────────────────────────────────────────────────────┐#### Terminal 1 - API Conta Corrente
+
+- **JWT Authentication** - Autenticação stateless
+
+│              CAMADA DE OBSERVABILIDADE                       │```powershell
+
+### Observabilidade
+
+- **Serilog 9.0.0** - Logging estruturado│                                                               │cd src\BankMore.ContaCorrente\Api
+
+- **Serilog.Sinks.Seq** - Sink para Seq
+
+- **prometheus-net 8.2.1** - Métricas Prometheus│  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌────────────┐   │dotnet run
+
+- **Health Checks** - Monitoramento (SQLite, Redis, Kafka)
+
+│  │ Serilog │─►│   Seq    │  │Prometheus│─►│  Grafana   │   │```
+
+### DevOps
+
+- **Docker & Docker Compose** - Containerização│  │  Logs   │  │ (5341)   │  │  (9090)  │  │   (3000)   │   │
+
+- **Nginx** - Web server para Blazor
+
+│  └─────────┘  └──────────┘  └──────────┘  └────────────┘   │#### Terminal 2 - API Transferência
+
+### Testes
+
+- **xUnit 2.9.3** - Framework de testes└──────────────────────────────────────────────────────────────┘```powershell
+
+- **FluentAssertions 8.8.0** - Assertions legíveis
+
+- **Moq 4.20.72** - Mocking```cd src\BankMore.Transferencia\Api
+
+- **Selenium WebDriver 4.27.0** - Testes E2E
+
+- **coverlet** - Code coveragedotnet run
 
 
 
-### Backend## 🎯 Funcionalidades da Interface Web
+---### 📦 Componentes```
 
-- **.NET 9.0** - Framework principal
 
-- **ASP.NET Core** - APIs RESTful### Autenticação
-
-- **Entity Framework Core 9.0.10** - ORM (API Conta)- ✅ Login com CPF ou número da conta
-
-- **Dapper 2.1.66** - Micro-ORM (API Transferência)- ✅ Cadastro de nova conta
-
-- **MediatR 13.1.0** - CQRS pattern- ✅ Logout
-
-- **KafkaFlow 4.0.1** - Cliente Kafka- ✅ JWT Token armazenado no LocalStorage
-
-- **BCrypt.Net 4.0.3** - Hashing de senhas
-
-- **SQLite** - Banco de dados### Gestão de Conta
-
-- ✅ Visualizar dados da conta (CPF, nome, status)
-
-### Frontend- ✅ Consultar saldo em tempo real
-
-- **Blazor WebAssembly** - SPA client-side- ✅ Criar movimentações (crédito/débito)
-
-- **Bootstrap 5** - UI responsiva- ✅ Visualizar extrato com paginação
-
-- **HttpClient** - Comunicação com APIs
-
-- **JWT Authentication** - Autenticação stateless### Transferências
-
-- ✅ Realizar transferências entre contas
-
-### Observabilidade- ✅ Visualizar histórico de transferências
-
-- **Serilog 9.0.0** - Logging estruturado- ✅ Informações de tarifa (R$ 2,00)
-
-- **Serilog.Sinks.Seq** - Sink para Seq- ✅ Paginação de resultados
-
-- **Serilog.Sinks.Console** - Sink para Console
-
-- **prometheus-net 8.2.1** - Métricas Prometheus## 🎨 Tecnologias
-
-- **Health Checks** - Monitoramento de saúde
-
-  - SQLite, Redis, Kafka### Frontend
-
-- **Blazor WebAssembly** (client-side)
-
-### DevOps- **Bootstrap 5** (UI responsiva)
-
-- **Docker & Docker Compose** - Containerização- **HttpClient** (comunicação com APIs)
-
-- **Nginx** - Web server para Blazor- **JWT Authentication**
-
-- **Seq** - Agregação de logs
-
-- **Prometheus** - Métricas### Backend
-
-- **Grafana** - Visualização- **.NET 9.0**
-
-- **Entity Framework Core 9.0.10**
-
-### Testes- **Dapper 2.1.66**
-
-- **xUnit 2.9.3** - Framework de testes- **KafkaFlow 4.0.1** (opcional)
-
-- **FluentAssertions 8.8.0** - Assertions legíveis- **SQLite**
-
-- **Moq 4.20.72** - Mocking- **JWT Bearer Authentication**
-
-- **Selenium WebDriver 4.27.0** - Testes E2E- **Swagger/OpenAPI**
-
-- **coverlet** - Code coverage- **BCrypt.Net**
-
-- **MediatR** (CQRS pattern)
-
----
-
-## 🔧 Pré-requisitos
 
 ## ✨ Funcionalidades
 
-- .NET 9.0 SDK
 
-### 🔐 Autenticação e Segurança- Docker Desktop (opcional, para Kafka)
 
-- ✅ Cadastro de conta com CPF e senha- PowerShell ou terminal compatível
+### 🔐 Autenticação e Segurança| Componente | Tecnologia | Porta | Descrição |#### Terminal 3 - Interface Web
 
-- ✅ Login com CPF ou número da conta- Navegador web moderno
+- ✅ Cadastro de conta com CPF e senha
+
+- ✅ Login com CPF ou número da conta|------------|-----------|-------|-----------|```powershell
 
 - ✅ JWT Token com refresh token
 
-- ✅ Senha criptografada com BCrypt## 📦 Estrutura do Projeto
+- ✅ Senha criptografada com BCrypt| **Blazor Web** | WebAssembly | 8080 | Interface de usuário moderna e responsiva |cd src\BankMore.Web
 
 - ✅ CPF criptografado com AES-256-CBC
 
-- ✅ Token **NÃO** contém dados sensíveis```
+- ✅ Token **NÃO** contém dados sensíveis| **API Conta** | ASP.NET Core + EF Core | 5003 | Gerencia contas, auth JWT, movimentações |dotnet run
 
-- ✅ LogoutBankMore/
+- ✅ Logout com revogação de token
 
-├── src/
+| **API Transferência** | ASP.NET Core + Dapper | 5004 | Processa transferências com rollback |```
 
-### 💳 Gestão de Conta│   ├── BankMore.Web/                    # 🆕 Interface Blazor WebAssembly
+### 💳 Gestão de Conta
 
-- ✅ Criar conta corrente│   │   ├── Models/                      # DTOs
+- ✅ Criar conta corrente| **Worker Tarifas** | Background Service | - | Consome eventos Kafka e debita tarifas |
 
-- ✅ Consultar dados da conta│   │   ├── Services/                    # HTTP Services
+- ✅ Consultar dados da conta
 
-- ✅ Visualizar saldo em tempo real│   │   ├── Pages/                       # Páginas Razor
+- ✅ Visualizar saldo em tempo real| **Kafka** | Apache Kafka | 9092 | Mensageria assíncrona |### Acessar o Sistema
 
-- ✅ Ativar/desativar conta│   │   └── Layout/                      # Layout e Menu
+- ✅ Ativar/desativar conta
 
-- ✅ Histórico de movimentações│   ├── BankMore.ContaCorrente/         # API Conta Corrente
+- ✅ Histórico de movimentações| **Zookeeper** | Apache Zookeeper | 2181 | Coordenação do Kafka |
 
-│   │   ├── Api/                         # Controllers e Program
 
-### 💸 Movimentações│   │   ├── Application/                 # CQRS (MediatR)
 
-- ✅ Crédito (depósito)│   │   ├── Domain/                      # Entidades e interfaces
+### 💸 Movimentações| **Redis** | Redis Cache | 6379 | Idempotência e cache distribuído |- **🌐 Interface Web**: http://localhost:5000 ou https://localhost:5001
 
-- ✅ Débito (saque)│   │   └── Infrastructure/              # Repositórios e DbContext
+- ✅ Crédito (depósito)
 
-- ✅ Extrato com paginação│   ├── BankMore.Transferencia/         # API Transferência
+- ✅ Débito (saque)| **Seq** | Seq Logs | 5341 | Agregação e visualização de logs |- **📖 Swagger Conta**: http://localhost:5003
 
-- ✅ Filtros por tipo e período│   │   ├── Api/                         # Controllers e Program
+- ✅ Extrato com paginação
 
-│   │   ├── Application/                 # CQRS (MediatR)
+- ✅ Filtros por tipo e período| **Prometheus** | Prometheus | 9090 | Coleta de métricas |- **📖 Swagger Transferência**: http://localhost:5004
 
-### 🔄 Transferências│   │   ├── Domain/                      # Entidades e interfaces
 
-- ✅ Transferência entre contas│   │   └── Infrastructure/              # Repositórios Dapper
 
-- ✅ Validação de saldo│   └── BankMore.Tarifas/               # Worker Tarifas
+### 🔄 Transferências| **Grafana** | Grafana | 3000 | Dashboards e visualizações |
 
-- ✅ Rollback automático em caso de falha│       ├── Handlers/                    # Event Handlers
+- ✅ Transferência entre contas
 
-- ✅ Tarifa de R$ 2,00 por transferência│       └── Services/                    # Business Services
+- ✅ Validação de saldo## 📘 Documentação
 
-- ✅ Histórico de transferências├── tests/                               # Testes automatizados
+- ✅ Rollback automático em caso de falha
 
-- ✅ Idempotência garantida├── start-all.ps1                        # 🆕 Script de inicialização
+- ✅ Tarifa de R$ 2,00 por transferência---
 
-├── GUIA-EXECUCAO-WEB.md                # 🆕 Tutorial completo
+- ✅ Histórico de transferências
 
-### ⚙️ Processamento Assíncrono└── README.md                            # Este arquivo
+- ✅ Idempotência garantida- **[Guia de Execução Web](GUIA-EXECUCAO-WEB.md)**: Tutorial completo com fluxo de teste
 
-- ✅ Worker que consome eventos Kafka```
+
+
+### ⚙️ Processamento Assíncrono## 🚀 Tecnologias- **[README da Interface Web](src/BankMore.Web/README.md)**: Documentação específica do frontend
+
+- ✅ Worker que consome eventos Kafka
 
 - ✅ Persistência de tarifas no banco
 
-- ✅ Débito automático de tarifas## 🧪 Fluxo de Teste Rápido
+- ✅ Débito automático de tarifas
 
-- ✅ Retry e dead letter queue
+- ✅ Retry e dead letter queue### Backend## 🎯 Funcionalidades da Interface Web
 
-1. Execute `.\start-all.ps1`
 
-### 📊 Observabilidade2. Acesse http://localhost:5000
 
-- ✅ Logs estruturados (Serilog + Seq)3. Clique em "Criar Conta"
+### 📊 Observabilidade- **.NET 9.0** - Framework principal
 
-- ✅ Métricas Prometheus4. Cadastre-se com CPF, nome e senha
+- ✅ Logs estruturados (Serilog + Seq)
 
-- ✅ Health Checks5. Faça login
+- ✅ Métricas Prometheus- **ASP.NET Core** - APIs RESTful### Autenticação
 
-- ✅ Dashboards Grafana (opcional)6. Adicione saldo (Crédito de R$ 1.000)
+- ✅ Health Checks (/health, /health/ready, /health/live)
 
-- ✅ Correlation ID para rastreamento7. Realize uma transferência
+- ✅ Dashboards Grafana- **Entity Framework Core 9.0.10** - ORM (API Conta)- ✅ Login com CPF ou número da conta
 
-8. Verifique o extrato e histórico
+- ✅ Correlation ID para rastreamento
 
-### 🧪 Testes
-
-- ✅ **41 testes unitários** (xUnit)## 🐛 Troubleshooting
-
-  - CpfValidator (9 testes)
-
-  - JwtService (16 testes)### Erro de CORS
-
-  - Cobertura: 95%+- Certifique-se de que as APIs estão rodando
-
-- ✅ **29 testes E2E** (Selenium)- CORS já está configurado nas APIs
-
-  - Cadastro (9 testes)
-
-  - Login (10 testes)### Token Expirado
-
-  - Minha Conta (10 testes)- Faça logout e login novamente
-
-- Tokens JWT têm validade de 24 horas
+- **Dapper 2.1.66** - Micro-ORM (API Transferência)- ✅ Cadastro de nova conta
 
 ---
 
-### Porta em Uso
+- **MediatR 13.1.0** - CQRS pattern- ✅ Logout
 
-## 📋 Pré-requisitos- Verifique se não há outros serviços nas portas 5000, 5003 ou 5004
+## 📋 Pré-requisitos
 
-- Use `netstat -ano | findstr :5000` para verificar
+- **KafkaFlow 4.0.1** - Cliente Kafka- ✅ JWT Token armazenado no LocalStorage
 
 ### Obrigatórios
 
-- ✅ **Docker Desktop** instalado e rodando## 📝 Próximos Passos
+- ✅ **Docker Desktop** instalado e rodando- **BCrypt.Net 4.0.3** - Hashing de senhas
 
-- ✅ **Git** (para clonar o repositório)
+- ✅ **Git** para clonar o repositório
 
-- ✅ **Navegador Web** moderno (Chrome, Edge, Firefox)### Interface Web
+- ✅ **Navegador Web** moderno (Chrome, Edge, Firefox)- **SQLite** - Banco de dados### Gestão de Conta
 
-- [ ] Página de consulta de tarifas
 
-### Opcionais (para desenvolvimento)- [ ] Gráficos de movimentações
 
-- ⚙️ **.NET 9.0 SDK** (para rodar fora do Docker)- [ ] Dark mode
+### Opcionais (para desenvolvimento)- ✅ Visualizar dados da conta (CPF, nome, status)
 
-- ⚙️ **Visual Studio 2022** ou **VS Code**- [ ] PWA (Progressive Web App)
+- ⚙️ **.NET 9.0 SDK**
 
-- ⚙️ **PowerShell** (Windows) ou **Bash** (Linux/Mac)- [ ] Notificações toast
+- ⚙️ **Visual Studio 2022** ou **VS Code**### Frontend- ✅ Consultar saldo em tempo real
 
-- [ ] Testes com bUnit
+- ⚙️ **PowerShell** (Windows) ou **Bash** (Linux/Mac)
+
+- **Blazor WebAssembly** - SPA client-side- ✅ Criar movimentações (crédito/débito)
 
 ---
 
-### APIs
+- **Bootstrap 5** - UI responsiva- ✅ Visualizar extrato com paginação
 
-## 🐋 Como Executar com Docker- [ ] Docker Compose completo (APIs + Kafka + Worker + Web)
+## 🐋 Como Executar com Docker
 
-- [ ] Testes unitários com xUnit
+- **HttpClient** - Comunicação com APIs
 
-### 1️⃣ Clonar o Repositório- [ ] Testes de integração end-to-end
+### 1️⃣ Clonar o Repositório
 
-- [ ] Health checks e retry policies
-
-```bash- [ ] Dead Letter Queue para mensagens falhadas
-
-git clone https://github.com/seu-usuario/BankMore.git
-
-cd BankMore---
-
-```
-
-**BankMore** - Sistema bancário completo com interface moderna 🏦✨
-
-### 2️⃣ Subir Toda a Stack
-
-```powershell
-
-```bash# Criar docker-compose.yml na raiz do projeto (veja próxima seção)
-
-# Buildar e iniciar todos os containersdocker-compose up -d
-
-docker-compose up -d --build```
-
-
-
-# Aguardar serviços iniciarem (~30 segundos)### 2️⃣ Executar as APIs
-
-# No Windows (PowerShell):
-
-Start-Sleep -Seconds 30```powershell
-
-# Terminal 1 - API Conta Corrente
-
-# No Linux/Mac:cd src\BancoDigitalAna.ContaCorrente
-
-sleep 30dotnet run
-
-```
-
-# Terminal 2 - API Transferência
-
-### 3️⃣ Verificar Status dos Containerscd src\BancoDigitalAna.Transferencia
-
-dotnet run
+- **JWT Authentication** - Autenticação stateless### Transferências
 
 ```bash
 
-docker-compose ps# Terminal 3 - Worker Tarifas
+git clone https://github.com/IgorAnjos/bank-more.git- ✅ Realizar transferências entre contas
 
-```cd src\BancoDigitalAna.Tarifas
+cd bank-more
 
-dotnet run
-
-**Saída esperada** (10 containers rodando):```
+```### Observabilidade- ✅ Visualizar histórico de transferências
 
 
 
-```### 3️⃣ Testar o Sistema
+### 2️⃣ Subir Toda a Stack- **Serilog 9.0.0** - Logging estruturado- ✅ Informações de tarifa (R$ 2,00)
+
+
+
+```bash- **Serilog.Sinks.Seq** - Sink para Seq- ✅ Paginação de resultados
+
+# Buildar e iniciar todos os containers
+
+docker-compose up -d --build- **Serilog.Sinks.Console** - Sink para Console
+
+
+
+# Aguardar serviços iniciarem (~30 segundos)- **prometheus-net 8.2.1** - Métricas Prometheus## 🎨 Tecnologias
+
+# Windows (PowerShell):
+
+Start-Sleep -Seconds 30- **Health Checks** - Monitoramento de saúde
+
+
+
+# Linux/Mac:  - SQLite, Redis, Kafka### Frontend
+
+sleep 30
+
+```- **Blazor WebAssembly** (client-side)
+
+
+
+### 3️⃣ Verificar Status dos Containers### DevOps- **Bootstrap 5** (UI responsiva)
+
+
+
+```bash- **Docker & Docker Compose** - Containerização- **HttpClient** (comunicação com APIs)
+
+docker-compose ps
+
+```- **Nginx** - Web server para Blazor- **JWT Authentication**
+
+
+
+**Saída esperada** (10 containers rodando):- **Seq** - Agregação de logs
+
+
+
+```- **Prometheus** - Métricas### Backend
 
 NAME                           STATUS          PORTS
 
-bankmore-web-1                 Up             0.0.0.0:8080->80/tcpAcesse os Swaggers:
+bankmore-web-1                 Up             0.0.0.0:8080->80/tcp- **Grafana** - Visualização- **.NET 9.0**
 
-bankmore-api-conta-1           Up             0.0.0.0:5003->8080/tcp- **API Conta**: http://localhost:5003/swagger
+bankmore-api-conta-1           Up             0.0.0.0:5003->8080/tcp
 
-bankmore-api-transferencia-1   Up             0.0.0.0:5004->8080/tcp- **API Transferência**: http://localhost:5004/swagger
+bankmore-api-transferencia-1   Up             0.0.0.0:5004->8080/tcp- **Entity Framework Core 9.0.10**
 
 bankmore-worker-tarifas-1      Up
 
-kafka                          Up             0.0.0.0:9092->9092/tcp#### Fluxo Completo de Teste
+kafka                          Up             0.0.0.0:9092->9092/tcp### Testes- **Dapper 2.1.66**
 
 zookeeper                      Up             0.0.0.0:2181->2181/tcp
 
-redis                          Up             0.0.0.0:6379->6379/tcp```powershell
+redis                          Up             0.0.0.0:6379->6379/tcp- **xUnit 2.9.3** - Framework de testes- **KafkaFlow 4.0.1** (opcional)
 
-seq                            Up             0.0.0.0:5341->80/tcp# 1. Cadastrar conta origem
+seq                            Up             0.0.0.0:5341->80/tcp
 
-prometheus                     Up             0.0.0.0:9090->9090/tcpcurl -X POST http://localhost:5003/api/conta `
+prometheus                     Up             0.0.0.0:9090->9090/tcp- **FluentAssertions 8.8.0** - Assertions legíveis- **SQLite**
 
-grafana                        Up             0.0.0.0:3000->3000/tcp  -H "Content-Type: application/json" `
+grafana                        Up             0.0.0.0:3000->3000/tcp
 
-```  -d '{
+```- **Moq 4.20.72** - Mocking- **JWT Bearer Authentication**
 
-    "cpf": "12345678901",
 
-### 4️⃣ Acessar o Sistema    "nome": "João Silva",
 
-    "senha": "senha123"
+### 4️⃣ Acessar o Sistema- **Selenium WebDriver 4.27.0** - Testes E2E- **Swagger/OpenAPI**
 
-| Interface | URL | Credenciais |  }'
+
+
+| Interface | URL | Credenciais |- **coverlet** - Code coverage- **BCrypt.Net**
 
 |-----------|-----|-------------|
 
-| **🌐 Aplicação Web** | http://localhost:8080 | - |# 2. Cadastrar conta destino
+| **🌐 Aplicação Web** | http://localhost:8080 | - |- **MediatR** (CQRS pattern)
 
-| **📖 API Conta (Swagger)** | http://localhost:5003 | - |curl -X POST http://localhost:5003/api/conta `
+| **📖 API Conta (Swagger)** | http://localhost:5003 | - |
 
-| **📖 API Transferência (Swagger)** | http://localhost:5004 | - |  -H "Content-Type: application/json" `
+| **📖 API Transferência (Swagger)** | http://localhost:5004 | - |---
 
-| **📊 Seq (Logs)** | http://localhost:5341 | - |  -d '{
+| **📊 Seq (Logs)** | http://localhost:5341 | - |
 
-| **📈 Prometheus** | http://localhost:9090 | - |    "cpf": "98765432100",
+| **📈 Prometheus** | http://localhost:9090 | - |## 🔧 Pré-requisitos
 
-| **📊 Grafana** | http://localhost:3000 | admin/admin |    "nome": "Maria Santos",
+| **📊 Grafana** | http://localhost:3000 | admin/admin |
 
-| **🔴 Redis** | localhost:6379 | - |    "senha": "senha456"
+## ✨ Funcionalidades
 
-| **📨 Kafka** | localhost:9092 | - |  }'
+### 5️⃣ Fluxo de Teste Completo
 
+- .NET 9.0 SDK
 
+#### **A. Cadastrar Conta**
 
-### 5️⃣ Fluxo de Teste Completo# 3. Fazer login
+1. Acesse http://localhost:8080### 🔐 Autenticação e Segurança- Docker Desktop (opcional, para Kafka)
 
-curl -X POST http://localhost:5003/api/auth/login `
+2. Clique em **"Criar Conta"**
 
-#### **Passo 1: Cadastrar Conta**  -H "Content-Type: application/json" `
+3. Preencha: CPF `12345678909`, Nome `João Silva`, Senha `senha123`- ✅ Cadastro de conta com CPF e senha- PowerShell ou terminal compatível
 
-  -d '{
+4. Anote o número da conta exibido
 
-1. Acesse http://localhost:8080    "numeroContaOuCpf": "12345678901",
+- ✅ Login com CPF ou número da conta- Navegador web moderno
 
-2. Clique em **"Criar Conta"**    "senha": "senha123"
+#### **B. Fazer Login**
 
-3. Preencha:  }'
+1. Clique em **"Fazer Login"**- ✅ JWT Token com refresh token
 
-   - **CPF**: `12345678909` (válido)# Copie o token JWT retornado
+2. Digite CPF ou número da conta + senha
 
-   - **Nome**: `João Silva`
+3. Acesse o dashboard- ✅ Senha criptografada com BCrypt## 📦 Estrutura do Projeto
 
-   - **Senha**: `senha123`# 4. Fazer uma movimentação de crédito (adicionar R$ 1000)
 
-4. Clique em **"Criar Conta"**curl -X POST http://localhost:5003/api/movimentacao `
 
-5. Anote o **número da conta** exibido  -H "Content-Type: application/json" `
+#### **C. Adicionar Saldo**- ✅ CPF criptografado com AES-256-CBC
 
-  -H "Authorization: Bearer SEU_TOKEN_JWT" `
+1. Na tela "Minha Conta", adicione R$ 1.000,00 (Crédito)
 
-#### **Passo 2: Fazer Login**  -d '{
+- ✅ Token **NÃO** contém dados sensíveis```
 
-    "chaveIdempotencia": "mov-001",
+#### **D. Realizar Transferência**
 
-1. Clique em **"Fazer Login"**    "tipoMovimento": "C",
+1. Crie uma segunda conta (CPF diferente)- ✅ LogoutBankMore/
 
-2. Digite:    "valor": 1000.00
+2. Faça login com a primeira conta
 
-   - **Conta ou CPF**: `12345678909` (ou número da conta)  }'
+3. Vá para "Transferências" e transfira R$ 100,00├── src/
 
-   - **Senha**: `senha123`
+4. Verifique o débito da tarifa (R$ 2,00) no extrato
 
-3. Clique em **"Entrar"**# 5. Realizar transferência
+### 💳 Gestão de Conta│   ├── BankMore.Web/                    # 🆕 Interface Blazor WebAssembly
 
-curl -X POST http://localhost:5004/api/transferencia `
+#### **E. Verificar Observabilidade**
 
-#### **Passo 3: Adicionar Saldo**  -H "Content-Type: application/json" `
+1. **Logs no Seq**: http://localhost:5341- ✅ Criar conta corrente│   │   ├── Models/                      # DTOs
 
-  -H "Authorization: Bearer SEU_TOKEN_JWT" `
+   - Busque por "Transferência realizada"
 
-1. Na tela **"Minha Conta"**, clique em **"Adicionar Movimentação"**  -d '{
+2. **Métricas no Prometheus**: http://localhost:9090- ✅ Consultar dados da conta│   │   ├── Services/                    # HTTP Services
 
-2. Selecione **"Crédito"**    "chaveIdempotencia": "trans-001",
+   - Query: `http_requests_received_total`
 
-3. Digite **R$ 1.000,00**    "idContaCorrenteDestino": "ID_CONTA_DESTINO",
+- ✅ Visualizar saldo em tempo real│   │   ├── Pages/                       # Páginas Razor
 
-4. Clique em **"Adicionar"**    "valor": 100.00
+### 6️⃣ Parar o Sistema
 
-5. Verifique que o saldo foi atualizado  }'
+- ✅ Ativar/desativar conta│   │   └── Layout/                      # Layout e Menu
 
+```bash
 
+# Parar containers (preserva dados)- ✅ Histórico de movimentações│   ├── BankMore.ContaCorrente/         # API Conta Corrente
 
-#### **Passo 4: Criar Segunda Conta (Destino)**# 6. Consultar saldo (deve ter descontado R$ 100 + R$ 2 de tarifa)
+docker-compose stop
 
-curl -X GET http://localhost:5003/api/conta/saldo `
+│   │   ├── Api/                         # Controllers e Program
 
-1. Faça **Logout**  -H "Authorization: Bearer SEU_TOKEN_JWT"
+# Parar e remover containers
 
-2. Crie uma nova conta com CPF diferente: `98765432100````
+docker-compose down### 💸 Movimentações│   │   ├── Application/                 # CQRS (MediatR)
 
-3. Anote o **número da conta destino**
 
-## 📊 Bancos de Dados
 
-#### **Passo 5: Realizar Transferência**
+# Remover containers E volumes (apaga banco de dados)- ✅ Crédito (depósito)│   │   ├── Domain/                      # Entidades e interfaces
 
-O sistema cria automaticamente 3 bancos SQLite:
+docker-compose down -v
 
-1. Faça login novamente com a **primeira conta**
+```- ✅ Débito (saque)│   │   └── Infrastructure/              # Repositórios e DbContext
 
-2. Vá para **"Transferências"**1. **contacorrente.db** - API Conta
 
-3. Clique em **"Nova Transferência"**   - Tables: `contacorrente`, `movimento`, `idempotencia`
 
-4. Preencha:
+---- ✅ Extrato com paginação│   ├── BankMore.Transferencia/         # API Transferência
 
-   - **Conta Destino**: (número da segunda conta)2. **transferencia.db** - API Transferência
 
-   - **Valor**: `R$ 100,00`   - Tables: `transferencia`, `idempotencia`
 
-5. Clique em **"Transferir"**
+## 🧪 Testes- ✅ Filtros por tipo e período│   │   ├── Api/                         # Controllers e Program
 
-3. **tarifas.db** - Worker Tarifas
 
-#### **Passo 6: Verificar Tarifa**   - Tables: `tarifa`
 
+### Testes Unitários (xUnit)│   │   ├── Application/                 # CQRS (MediatR)
 
 
-1. Vá para **"Minha Conta"**## ⚙️ Configurações
 
-2. Verifique o saldo:
+```bash### 🔄 Transferências│   │   ├── Domain/                      # Entidades e interfaces
 
-   - **Antes**: R$ 1.000,00### API Conta Corrente (`appsettings.json`)
+cd tests/BankMore.ContaCorrente.Tests
 
-   - **Depois**: R$ 898,00 (R$ 100 + R$ 2 de tarifa)
+dotnet test- ✅ Transferência entre contas│   │   └── Infrastructure/              # Repositórios Dapper
 
-3. Consulte o **Extrato** para ver:```json
 
-   - Débito de R$ 100,00 (transferência){
 
-   - Débito de R$ 2,00 (tarifa)  "ConnectionStrings": {
+# Com cobertura- ✅ Validação de saldo│   └── BankMore.Tarifas/               # Worker Tarifas
 
-    "DefaultConnection": "Data Source=contacorrente.db"
+dotnet test --collect:"XPlat Code Coverage"
 
-#### **Passo 7: Validar Logs no Seq**  },
+```- ✅ Rollback automático em caso de falha│       ├── Handlers/                    # Event Handlers
 
-  "Jwt": {
 
-1. Acesse http://localhost:5341    "Key": "sua-chave-secreta-jwt-com-no-minimo-32-caracteres-para-seguranca",
 
-2. Busque por:    "Issuer": "BancoDigitalAna",
+#### Testes Implementados- ✅ Tarifa de R$ 2,00 por transferência│       └── Services/                    # Business Services
 
-   - `Transferência realizada`    "Audience": "BancoDigitalAna.Api"
 
-   - `Tarifa debitada`  }
 
-3. Verifique **Correlation ID** para rastreamento}
+**CpfValidatorTests** (9 testes)- ✅ Histórico de transferências├── tests/                               # Testes automatizados
+
+- ✅ Validar CPF válido
+
+- ✅ Rejeitar CPF inválido- ✅ Idempotência garantida├── start-all.ps1                        # 🆕 Script de inicialização
+
+- ✅ Rejeitar CPF com dígitos repetidos
+
+- ✅ Aceitar CPF formatado├── GUIA-EXECUCAO-WEB.md                # 🆕 Tutorial completo
+
+- ✅ Performance: 1000 validações < 100ms
+
+### ⚙️ Processamento Assíncrono└── README.md                            # Este arquivo
+
+**JwtServiceTests** (16 testes)
+
+- ✅ Gerar Access Token com claims obrigatórias- ✅ Worker que consome eventos Kafka```
+
+- ✅ **NÃO** incluir dados sensíveis no token
+
+- ✅ Gerar Refresh Token criptograficamente seguro- ✅ Persistência de tarifas no banco
+
+- ✅ Validar token válido/inválido/expirado
+
+- ✅ Hash SHA-256 determinístico- ✅ Débito automático de tarifas## 🧪 Fluxo de Teste Rápido
+
+
+
+**Cobertura**: 95%+ nas principais funcionalidades- ✅ Retry e dead letter queue
+
+
+
+### Testes E2E (Selenium)1. Execute `.\start-all.ps1`
+
+
+
+```bash### 📊 Observabilidade2. Acesse http://localhost:5000
+
+# Pré-requisito: aplicação rodando em http://localhost:8080
+
+cd tests/BankMore.Web.E2ETests- ✅ Logs estruturados (Serilog + Seq)3. Clique em "Criar Conta"
+
+dotnet test
+
+```- ✅ Métricas Prometheus4. Cadastre-se com CPF, nome e senha
+
+
+
+#### Testes Implementados- ✅ Health Checks5. Faça login
+
+
+
+- **CadastroE2ETests** (9 testes) - Cadastro de conta- ✅ Dashboards Grafana (opcional)6. Adicione saldo (Crédito de R$ 1.000)
+
+- **LoginE2ETests** (10 testes) - Login e autenticação
+
+- **MinhaContaE2ETests** (10 testes) - Dashboard e operações- ✅ Correlation ID para rastreamento7. Realize uma transferência
+
+
+
+**Total**: 29 testes E2E com Page Object Pattern8. Verifique o extrato e histórico
+
+
+
+---### 🧪 Testes
+
+
+
+## 📊 Observabilidade- ✅ **41 testes unitários** (xUnit)## 🐛 Troubleshooting
+
+
+
+### 📝 Logs Estruturados (Serilog + Seq)  - CpfValidator (9 testes)
+
+
+
+**Acessar**: http://localhost:5341  - JwtService (16 testes)### Erro de CORS
+
+
+
+**Exemplos de Queries**:  - Cobertura: 95%+- Certifique-se de que as APIs estão rodando
+
+```sql
+
+-- Todas as transferências- ✅ **29 testes E2E** (Selenium)- CORS já está configurado nas APIs
+
+@MessageTemplate = "Transferência realizada"
+
+  - Cadastro (9 testes)
+
+-- Erros nas últimas 24h
+
+@Level = "Error" and @Timestamp > Now() - 1d  - Login (10 testes)### Token Expirado
+
+
+
+-- Rastrear requisição  - Minha Conta (10 testes)- Faça logout e login novamente
+
+CorrelationId = "abc-123-def"
+
+```- Tokens JWT têm validade de 24 horas
+
+
+
+### 📈 Métricas (Prometheus)---
+
+
+
+**Acessar**: http://localhost:9090### Porta em Uso
+
+
+
+**Queries PromQL**:## 📋 Pré-requisitos- Verifique se não há outros serviços nas portas 5000, 5003 ou 5004
+
+```promql
+
+# Taxa de requisições/segundo- Use `netstat -ano | findstr :5000` para verificar
+
+rate(http_requests_received_total[5m])
+
+### Obrigatórios
+
+# Percentil 95 de duração
+
+histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))- ✅ **Docker Desktop** instalado e rodando## 📝 Próximos Passos
+
+
+
+# Health checks com falha- ✅ **Git** (para clonar o repositório)
+
+health_check_status{status="Unhealthy"}
+
+```- ✅ **Navegador Web** moderno (Chrome, Edge, Firefox)### Interface Web
+
+
+
+### 🏥 Health Checks- [ ] Página de consulta de tarifas
+
+
+
+| Endpoint | Descrição |### Opcionais (para desenvolvimento)- [ ] Gráficos de movimentações
+
+|----------|-----------|
+
+| `/health` | Health check geral |- ⚙️ **.NET 9.0 SDK** (para rodar fora do Docker)- [ ] Dark mode
+
+| `/health/ready` | Readiness probe |
+
+| `/health/live` | Liveness probe |- ⚙️ **Visual Studio 2022** ou **VS Code**- [ ] PWA (Progressive Web App)
+
+
+
+**Exemplo de Resposta**:- ⚙️ **PowerShell** (Windows) ou **Bash** (Linux/Mac)- [ ] Notificações toast
+
+```json
+
+{- [ ] Testes com bUnit
+
+  "status": "Healthy",
+
+  "totalDuration": "00:00:00.523",---
+
+  "entries": {
+
+    "sqlite": { "status": "Healthy" },### APIs
+
+    "redis": { "status": "Healthy" },
+
+    "kafka": { "status": "Healthy" }## 🐋 Como Executar com Docker- [ ] Docker Compose completo (APIs + Kafka + Worker + Web)
+
+  }
+
+}- [ ] Testes unitários com xUnit
 
 ```
 
-#### **Passo 8: Verificar Métricas no Prometheus**
+### 1️⃣ Clonar o Repositório- [ ] Testes de integração end-to-end
 
-### API Transferência (`appsettings.json`)
+---
+
+- [ ] Health checks e retry policies
+
+## 🌐 APIs Disponíveis
+
+```bash- [ ] Dead Letter Queue para mensagens falhadas
+
+### API Conta Corrente (Port 5003)
+
+git clone https://github.com/seu-usuario/BankMore.git
+
+**Autenticação**
+
+```httpcd BankMore---
+
+POST /api/auth/login
+
+Content-Type: application/json```
+
+
+
+{**BankMore** - Sistema bancário completo com interface moderna 🏦✨
+
+  "numeroContaOuCpf": "12345678909",
+
+  "senha": "senha123"### 2️⃣ Subir Toda a Stack
+
+}
+
+``````powershell
+
+
+
+**Cadastrar Conta**```bash# Criar docker-compose.yml na raiz do projeto (veja próxima seção)
+
+```http
+
+POST /api/conta# Buildar e iniciar todos os containersdocker-compose up -d
+
+Content-Type: application/json
+
+docker-compose up -d --build```
+
+{
+
+  "cpf": "12345678909",
+
+  "nome": "João Silva",
+
+  "senha": "senha123"# Aguardar serviços iniciarem (~30 segundos)### 2️⃣ Executar as APIs
+
+}
+
+```# No Windows (PowerShell):
+
+
+
+**Consultar Saldo**Start-Sleep -Seconds 30```powershell
+
+```http
+
+GET /api/conta/saldo# Terminal 1 - API Conta Corrente
+
+Authorization: Bearer {token}
+
+```# No Linux/Mac:cd src\BancoDigitalAna.ContaCorrente
+
+
+
+**Criar Movimentação**sleep 30dotnet run
+
+```http
+
+POST /api/movimentacao```
+
+Authorization: Bearer {token}
+
+Content-Type: application/json# Terminal 2 - API Transferência
+
+
+
+{### 3️⃣ Verificar Status dos Containerscd src\BancoDigitalAna.Transferencia
+
+  "chaveIdempotencia": "mov-001",
+
+  "tipoMovimento": "C",dotnet run
+
+  "valor": 1000.00
+
+}```bash
+
+```
+
+docker-compose ps# Terminal 3 - Worker Tarifas
+
+### API Transferência (Port 5004)
+
+```cd src\BancoDigitalAna.Tarifas
+
+**Realizar Transferência**
+
+```httpdotnet run
+
+POST /api/transferencia
+
+Authorization: Bearer {token}**Saída esperada** (10 containers rodando):```
+
+Content-Type: application/json
+
+
+
+{
+
+  "chaveIdempotencia": "trans-001",```### 3️⃣ Testar o Sistema
+
+  "idContaCorrenteDestino": "guid-destino",
+
+  "valor": 100.00NAME                           STATUS          PORTS
+
+}
+
+```bankmore-web-1                 Up             0.0.0.0:8080->80/tcpAcesse os Swaggers:
+
+
+
+**Swagger/OpenAPI**: bankmore-api-conta-1           Up             0.0.0.0:5003->8080/tcp- **API Conta**: http://localhost:5003/swagger
+
+- http://localhost:5003/swagger
+
+- http://localhost:5004/swaggerbankmore-api-transferencia-1   Up             0.0.0.0:5004->8080/tcp- **API Transferência**: http://localhost:5004/swagger
+
+
+
+---bankmore-worker-tarifas-1      Up
+
+
+
+## 🗂️ Estrutura do Projetokafka                          Up             0.0.0.0:9092->9092/tcp#### Fluxo Completo de Teste
+
+
+
+```zookeeper                      Up             0.0.0.0:2181->2181/tcp
+
+BankMore/
+
+├── 📁 src/redis                          Up             0.0.0.0:6379->6379/tcp```powershell
+
+│   ├── BankMore.Web/                    # Blazor WebAssembly
+
+│   ├── BankMore.ContaCorrente/          # Microsserviço Contaseq                            Up             0.0.0.0:5341->80/tcp# 1. Cadastrar conta origem
+
+│   │   ├── Api/                         # Controllers + Program.cs
+
+│   │   ├── Application/                 # CQRS (MediatR)prometheus                     Up             0.0.0.0:9090->9090/tcpcurl -X POST http://localhost:5003/api/conta `
+
+│   │   ├── Domain/                      # Entidades + Interfaces
+
+│   │   └── Infrastructure/              # EF Core + Repositóriosgrafana                        Up             0.0.0.0:3000->3000/tcp  -H "Content-Type: application/json" `
+
+│   ├── BankMore.Transferencia/          # Microsserviço Transferência
+
+│   │   ├── Api/```  -d '{
+
+│   │   ├── Application/
+
+│   │   ├── Domain/    "cpf": "12345678901",
+
+│   │   └── Infrastructure/              # Dapper
+
+│   └── BankMore.Tarifas/                # Worker Tarifas### 4️⃣ Acessar o Sistema    "nome": "João Silva",
+
+├── 📁 tests/
+
+│   ├── BankMore.ContaCorrente.Tests/    # 41 testes unitários    "senha": "senha123"
+
+│   └── BankMore.Web.E2ETests/           # 29 testes E2E (Selenium)
+
+├── 📁 sql/                              # Scripts SQL| Interface | URL | Credenciais |  }'
+
+├── 📁 especificacao/                    # Documentação técnica
+
+├── docker-compose.yml                   # 10 serviços|-----------|-----|-------------|
+
+├── prometheus.yml
+
+└── README.md| **🌐 Aplicação Web** | http://localhost:8080 | - |# 2. Cadastrar conta destino
+
+```
+
+| **📖 API Conta (Swagger)** | http://localhost:5003 | - |curl -X POST http://localhost:5003/api/conta `
+
+**Estatísticas**:
+
+- 80+ arquivos C#| **📖 API Transferência (Swagger)** | http://localhost:5004 | - |  -H "Content-Type: application/json" `
+
+- 15.000+ linhas de código
+
+- 10.000+ linhas de documentação| **📊 Seq (Logs)** | http://localhost:5341 | - |  -d '{
+
+
+
+---| **📈 Prometheus** | http://localhost:9090 | - |    "cpf": "98765432100",
+
+
+
+## 🐛 Troubleshooting| **📊 Grafana** | http://localhost:3000 | admin/admin |    "nome": "Maria Santos",
+
+
+
+### Containers não iniciam| **🔴 Redis** | localhost:6379 | - |    "senha": "senha456"
+
+
+
+```bash| **📨 Kafka** | localhost:9092 | - |  }'
+
+# Verificar logs
+
+docker-compose logs
+
+
+
+# Rebuild completo### 5️⃣ Fluxo de Teste Completo# 3. Fazer login
+
+docker-compose down -v
+
+docker-compose up -d --buildcurl -X POST http://localhost:5003/api/auth/login `
+
+```
+
+#### **Passo 1: Cadastrar Conta**  -H "Content-Type: application/json" `
+
+### Kafka não conecta
+
+  -d '{
+
+```bash
+
+# Restart Kafka1. Acesse http://localhost:8080    "numeroContaOuCpf": "12345678901",
+
+docker-compose restart kafka zookeeper
+
+2. Clique em **"Criar Conta"**    "senha": "senha123"
+
+# Aguardar inicialização
+
+sleep 303. Preencha:  }'
+
+```
+
+   - **CPF**: `12345678909` (válido)# Copie o token JWT retornado
+
+### Worker não consome mensagens
+
+   - **Nome**: `João Silva`
+
+```bash
+
+# Verificar logs do Worker   - **Senha**: `senha123`# 4. Fazer uma movimentação de crédito (adicionar R$ 1000)
+
+docker-compose logs worker-tarifas
+
+4. Clique em **"Criar Conta"**curl -X POST http://localhost:5003/api/movimentacao `
+
+# Verificar tópico Kafka
+
+docker exec -it kafka kafka-topics.sh --list --bootstrap-server localhost:90925. Anote o **número da conta** exibido  -H "Content-Type: application/json" `
+
+```
+
+  -H "Authorization: Bearer SEU_TOKEN_JWT" `
+
+### API retorna 401 Unauthorized
+
+#### **Passo 2: Fazer Login**  -d '{
+
+**Causa**: Token JWT expirado
+
+    "chaveIdempotencia": "mov-001",
+
+**Solução**: Fazer logout e login novamente
+
+1. Clique em **"Fazer Login"**    "tipoMovimento": "C",
+
+### Portas em uso
+
+2. Digite:    "valor": 1000.00
+
+```bash
+
+# Windows (PowerShell)   - **Conta ou CPF**: `12345678909` (ou número da conta)  }'
+
+netstat -ano | findstr :8080
+
+   - **Senha**: `senha123`
+
+# Linux/Mac
+
+lsof -i :80803. Clique em **"Entrar"**# 5. Realizar transferência
+
+
+
+# Matar processocurl -X POST http://localhost:5004/api/transferencia `
+
+taskkill /PID <PID> /F  # Windows
+
+kill -9 <PID>           # Linux/Mac#### **Passo 3: Adicionar Saldo**  -H "Content-Type: application/json" `
+
+```
+
+  -H "Authorization: Bearer SEU_TOKEN_JWT" `
+
+### Banco de dados corrompido
+
+1. Na tela **"Minha Conta"**, clique em **"Adicionar Movimentação"**  -d '{
+
+```bash
+
+# Remover volumes e recriar2. Selecione **"Crédito"**    "chaveIdempotencia": "trans-001",
+
+docker-compose down -v
+
+docker-compose up -d --build3. Digite **R$ 1.000,00**    "idContaCorrenteDestino": "ID_CONTA_DESTINO",
+
+
+
+# ⚠️ ATENÇÃO: Isso apaga todos os dados!4. Clique em **"Adicionar"**    "valor": 100.00
+
+```
+
+5. Verifique que o saldo foi atualizado  }'
+
+---
+
+
+
+## 🤝 Contribuindo
+
+#### **Passo 4: Criar Segunda Conta (Destino)**# 6. Consultar saldo (deve ter descontado R$ 100 + R$ 2 de tarifa)
+
+Contribuições são bem-vindas! Por favor, siga estas diretrizes:
+
+curl -X GET http://localhost:5003/api/conta/saldo `
+
+1. **Fork** o repositório
+
+2. Crie uma **branch** (`git checkout -b feature/MinhaFeature`)1. Faça **Logout**  -H "Authorization: Bearer SEU_TOKEN_JWT"
+
+3. **Commit** suas mudanças (`git commit -m 'feat: Adiciona MinhaFeature'`)
+
+4. **Push** para a branch (`git push origin feature/MinhaFeature`)2. Crie uma nova conta com CPF diferente: `98765432100````
+
+5. Abra um **Pull Request**
+
+3. Anote o **número da conta destino**
+
+### Conventional Commits
+
+## 📊 Bancos de Dados
+
+```
+
+feat: adiciona nova funcionalidade#### **Passo 5: Realizar Transferência**
+
+fix: corrige bug
+
+docs: atualiza documentaçãoO sistema cria automaticamente 3 bancos SQLite:
+
+test: adiciona testes
+
+refactor: refatora código1. Faça login novamente com a **primeira conta**
+
+perf: melhora performance
+
+chore: tarefas de manutenção2. Vá para **"Transferências"**1. **contacorrente.db** - API Conta
+
+```
+
+3. Clique em **"Nova Transferência"**   - Tables: `contacorrente`, `movimento`, `idempotencia`
+
+---
+
+4. Preencha:
+
+## 📚 Documentação Adicional
+
+   - **Conta Destino**: (número da segunda conta)2. **transferencia.db** - API Transferência
+
+- **[RESUMO-IMPLEMENTACAO-COMPLETA.md](especificacao/RESUMO-IMPLEMENTACAO-COMPLETA.md)** - Documentação técnica completa (8.000+ linhas)
+
+- **[ESTRUTURA.md](especificacao/ESTRUTURA.md)** - Arquitetura detalhada   - **Valor**: `R$ 100,00`   - Tables: `transferencia`, `idempotencia`
+
+- **[README-TESTES.md](tests/README-TESTES.md)** - Documentação de testes unitários
+
+- **[README E2E](tests/BankMore.Web.E2ETests/README.md)** - Documentação de testes E2E5. Clique em **"Transferir"**
+
+
+
+---3. **tarifas.db** - Worker Tarifas
+
+
+
+## 🎯 Roadmap#### **Passo 6: Verificar Tarifa**   - Tables: `tarifa`
+
+
+
+### V1.0 ✅ (Atual)
+
+- [x] Microsserviços (Conta, Transferência, Tarifas)
+
+- [x] Interface Blazor WebAssembly1. Vá para **"Minha Conta"**## ⚙️ Configurações
+
+- [x] Observabilidade completa
+
+- [x] Testes unitários (41) e E2E (29)2. Verifique o saldo:
+
+- [x] Docker Compose
+
+   - **Antes**: R$ 1.000,00### API Conta Corrente (`appsettings.json`)
+
+### V1.1 🚧 (Próxima)
+
+- [ ] API Gateway (Ocelot)   - **Depois**: R$ 898,00 (R$ 100 + R$ 2 de tarifa)
+
+- [ ] Circuit Breaker (Polly)
+
+- [ ] Outbox Pattern completo3. Consulte o **Extrato** para ver:```json
+
+- [ ] Saga Pattern para transações distribuídas
+
+   - Débito de R$ 100,00 (transferência){
+
+### V2.0 📋 (Futuro)
+
+- [ ] Kubernetes (Helm Charts)   - Débito de R$ 2,00 (tarifa)  "ConnectionStrings": {
+
+- [ ] CI/CD (GitHub Actions)
+
+- [ ] Testes de carga (k6)    "DefaultConnection": "Data Source=contacorrente.db"
+
+- [ ] Autenticação OAuth2
+
+#### **Passo 7: Validar Logs no Seq**  },
+
+---
+
+  "Jwt": {
+
+## 📄 Licença
+
+1. Acesse http://localhost:5341    "Key": "sua-chave-secreta-jwt-com-no-minimo-32-caracteres-para-seguranca",
+
+Este projeto é um **sistema de demonstração educacional** desenvolvido para fins de aprendizado e portfólio.
+
+2. Busque por:    "Issuer": "BancoDigitalAna",
+
+---
+
+   - `Transferência realizada`    "Audience": "BancoDigitalAna.Api"
+
+## 👨‍💻 Autor
+
+   - `Tarifa debitada`  }
+
+Desenvolvido por **Igor Anjos**
+
+3. Verifique **Correlation ID** para rastreamento}
+
+**Stack Tecnológica**:
+
+- .NET 9.0 + ASP.NET Core```
+
+- Blazor WebAssembly
+
+- Apache Kafka + Redis#### **Passo 8: Verificar Métricas no Prometheus**
+
+- Docker & Docker Compose
+
+- Serilog + Seq + Prometheus + Grafana### API Transferência (`appsettings.json`)
+
+- xUnit + Selenium WebDriver
 
 1. Acesse http://localhost:9090
 
+---
+
 2. Execute queries:```json
+
+<div align="center">
 
    ```promql{
 
+### 🏦 BankMore - Sistema Bancário Moderno 🚀
+
    # Total de requisições HTTP  "ConnectionStrings": {
 
-   http_requests_received_total    "DefaultConnection": "Data Source=transferencia.db"
+[![GitHub](https://img.shields.io/badge/GitHub-IgorAnjos%2Fbank--more-181717?logo=github)](https://github.com/IgorAnjos/bank-more)
+
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](https://www.docker.com/)   http_requests_received_total    "DefaultConnection": "Data Source=transferencia.db"
+
+[![.NET](https://img.shields.io/badge/.NET-9.0-purple?logo=dotnet)](https://dotnet.microsoft.com/)
 
      },
 
+**[⬆️ Voltar ao topo](#-bankmore---sistema-bancário-digital)**
+
    # Duração das requisições  "ApiContaCorrente": {
+
+</div>
 
    http_request_duration_seconds    "BaseUrl": "http://localhost:5003"
 
