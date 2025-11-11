@@ -33,7 +33,13 @@
 
                         <div class="mb-3">
                             <label for="numeroContaOuCpf" class="form-label">Número da Conta ou CPF</label>
-                            <InputText id="numeroContaOuCpf" class="form-control" @bind-Value="loginRequest.NumeroContaOuCpf" placeholder="Digite o número da conta ou CPF" />
+                            <input id="numeroContaOuCpf" 
+                                   class="form-control" 
+                                   value="@displayValue"
+                                   @oninput="OnInputChanged"
+                                   placeholder="Digite o número da conta ou CPF" 
+                                   maxlength="14" />
+                            <small class="form-text text-muted">Digite apenas números. CPF será formatado automaticamente.</small>
                             <ValidationMessage For="@(() => loginRequest.NumeroContaOuCpf)" />
                         </div>
 
@@ -73,6 +79,7 @@
     private string? errorMessage;
     private string? successMessage;
     private bool isLoading = false;
+    private string displayValue = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -80,6 +87,33 @@
         {
             NavigationManager.NavigateTo("/");
         }
+    }
+
+    private void OnInputChanged(ChangeEventArgs e)
+    {
+        var input = e.Value?.ToString() ?? string.Empty;
+        
+        // Remove tudo que não é número
+        var apenasNumeros = new string(input.Where(char.IsDigit).ToArray());
+        
+        // Se tiver 11 dígitos, aplica máscara de CPF: XXX.XXX.XXX-XX
+        if (apenasNumeros.Length == 11)
+        {
+            displayValue = $"{apenasNumeros.Substring(0, 3)}.{apenasNumeros.Substring(3, 3)}.{apenasNumeros.Substring(6, 3)}-{apenasNumeros.Substring(9, 2)}";
+        }
+        else if (apenasNumeros.Length > 11)
+        {
+            // Limita a 11 dígitos
+            apenasNumeros = apenasNumeros.Substring(0, 11);
+            displayValue = $"{apenasNumeros.Substring(0, 3)}.{apenasNumeros.Substring(3, 3)}.{apenasNumeros.Substring(6, 3)}-{apenasNumeros.Substring(9, 2)}";
+        }
+        else
+        {
+            displayValue = apenasNumeros;
+        }
+        
+        // Armazena apenas os números no modelo
+        loginRequest.NumeroContaOuCpf = apenasNumeros;
     }
 
     private async Task HandleLogin()
@@ -90,21 +124,26 @@
 
         try
         {
+            Console.WriteLine($"[LOGIN DEBUG] Tentando login com: NumeroOuCpf='{loginRequest.NumeroContaOuCpf}', SenhaLength={loginRequest.Senha?.Length ?? 0}");
+            
             var response = await AuthService.LoginAsync(loginRequest);
 
             if (response != null)
             {
+                Console.WriteLine($"[LOGIN DEBUG] Login bem-sucedido! Token recebido.");
                 successMessage = "Login realizado com sucesso!";
                 await Task.Delay(500);
                 NavigationManager.NavigateTo("/");
             }
             else
             {
+                Console.WriteLine($"[LOGIN DEBUG] Response é null - credenciais inválidas");
                 errorMessage = "Credenciais inválidas. Verifique seus dados e tente novamente.";
             }
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[LOGIN DEBUG] Exception: {ex.Message}");
             errorMessage = $"Erro ao realizar login: {ex.Message}";
         }
         finally

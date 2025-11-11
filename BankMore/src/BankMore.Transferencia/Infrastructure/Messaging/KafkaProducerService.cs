@@ -1,6 +1,7 @@
 ﻿using BankMore.Transferencia.Domain.Events;
 using BankMore.Transferencia.Domain.Interfaces;
 using KafkaFlow.Producers;
+using System.Text;
 using System.Text.Json;
 
 namespace BankMore.Transferencia.Infrastructure.Messaging;
@@ -22,11 +23,12 @@ public class KafkaProducerService : IKafkaProducerService
         var producer = _producerAccessor.GetProducer("transferencia-producer");
         
         var mensagem = JsonSerializer.Serialize(evento);
+        var mensagemBytes = Encoding.UTF8.GetBytes(mensagem);
         
         await producer.ProduceAsync(
             topic: "transferencias-realizadas",
             messageKey: evento.IdTransferencia,
-            messageValue: mensagem
+            messageValue: mensagemBytes
         );
     }
 }

@@ -28,7 +28,20 @@ public class TransferenciaService
     {
         AddAuthorizationHeader();
         var response = await _httpClient.PostAsJsonAsync("/api/v1/transferencias", request);
-        response.EnsureSuccessStatusCode();
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            
+            // Tentar extrair mensagem de erro do JSON de resposta
+            if (errorContent.Contains("INSUFFICIENT_BALANCE") || errorContent.Contains("Saldo insuficiente"))
+            {
+                throw new HttpRequestException("Saldo insuficiente. Verifique seu saldo e tente novamente.");
+            }
+            
+            response.EnsureSuccessStatusCode(); // Lança exceção padrão
+        }
+        
         return await response.Content.ReadFromJsonAsync<TransferenciaDto>();
     }
 

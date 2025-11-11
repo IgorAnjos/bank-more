@@ -35,26 +35,44 @@ public class LoginHandler : IRequestHandler<LoginCommand, LoginResponseDto>
 
     public async Task<LoginResponseDto> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
+        Console.WriteLine($"[LOGIN HANDLER] Recebido: NumeroOuCpf='{request.NumeroOuCpf}', SenhaLength={request.Senha?.Length ?? 0}");
+        
         Domain.Entities.ContaCorrente? conta = null;
 
         // Tenta buscar por número da conta
         if (int.TryParse(request.NumeroOuCpf, out int numeroConta))
         {
+            Console.WriteLine($"[LOGIN HANDLER] Buscando por número da conta: {numeroConta}");
             conta = await _repository.ObterPorNumeroAsync(numeroConta);
+            Console.WriteLine($"[LOGIN HANDLER] Conta encontrada por número? {conta != null}");
         }
 
         // Se não encontrou, tenta buscar por CPF (criptografa antes de buscar)
         if (conta == null)
         {
+            Console.WriteLine($"[LOGIN HANDLER] Tentando buscar por CPF: {request.NumeroOuCpf}");
             var cpfCriptografado = _cryptographyService.Encrypt(request.NumeroOuCpf);
             conta = await _repository.ObterPorCpfAsync(cpfCriptografado);
+            Console.WriteLine($"[LOGIN HANDLER] Conta encontrada por CPF? {conta != null}");
         }
 
         // Valida se a conta existe e se a senha está correta
-        if (conta == null || !_cryptographyService.VerifyPassword(request.Senha, conta.Senha))
+        if (conta == null)
         {
+            Console.WriteLine($"[LOGIN HANDLER] FALHA - Conta não encontrada");
             throw new UnauthorizedAccessException("USER_UNAUTHORIZED: Credenciais inválidas");
         }
+        
+        var senhaValida = _cryptographyService.VerifyPassword(request.Senha ?? string.Empty, conta.Senha);
+        Console.WriteLine($"[LOGIN HANDLER] Senha válida? {senhaValida}");
+        
+        if (!senhaValida)
+        {
+            Console.WriteLine($"[LOGIN HANDLER] FALHA - Senha incorreta");
+            throw new UnauthorizedAccessException("USER_UNAUTHORIZED: Credenciais inválidas");
+        }
+
+        Console.WriteLine($"[LOGIN HANDLER] Login bem-sucedido! IdConta: {conta.IdContaCorrente}");
 
         // Gera o access token (curta duração) - APENAS com ID opaco
         var accessToken = _jwtService.GerarAccessToken(conta.IdContaCorrente);

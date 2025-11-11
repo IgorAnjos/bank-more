@@ -12,9 +12,11 @@ CREATE TABLE contacorrente (
 CREATE TABLE movimento (
 	idmovimento TEXT(37) PRIMARY KEY, -- identificacao unica do movimento
 	idcontacorrente TEXT(37) NOT NULL, -- identificacao unica da conta corrente
-	datamovimento TEXT(25) NOT NULL, -- data do movimento no formato DD/MM/YYYY
+	datamovimento TEXT(25) NOT NULL, -- data do movimento no formato DD/MM/YYYY HH:MM:SS
 	tipomovimento TEXT(1) NOT NULL, -- tipo do movimento. (C = Credito, D = Debito).
 	valor REAL NOT NULL, -- valor do movimento. Usar duas casas decimais.
+	saldo_anterior REAL NOT NULL DEFAULT 0, -- saldo antes do movimento
+	saldo_atualizado REAL NOT NULL DEFAULT 0, -- saldo depois do movimento
 	CHECK (tipomovimento in ('C','D')),
 	FOREIGN KEY(idcontacorrente) REFERENCES contacorrente(idcontacorrente)
 );

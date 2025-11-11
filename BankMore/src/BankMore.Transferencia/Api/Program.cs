@@ -120,24 +120,24 @@ builder.Services.AddHttpClient<IContaCorrenteService, ContaCorrenteService>((cli
     return new ContaCorrenteService(client, apiContaUrl);
 });
 
-// Kafka Producer (COMENTADO TEMPORARIAMENTE PARA TESTES SEM BROKER)
-// var kafkaBootstrapServers = builder.Configuration.GetSection("Kafka")["BootstrapServers"] 
-//     ?? "localhost:9092";
+// Kafka Producer (KafkaFlow)
+var kafkaBootstrapServers = builder.Configuration.GetSection("Kafka")["BootstrapServers"] 
+    ?? "localhost:9092";
 
-// builder.Services.AddKafka(kafka => kafka
-//     .AddCluster(cluster => cluster
-//         .WithBrokers(new[] { kafkaBootstrapServers })
-//         .CreateTopicIfNotExists("transferencias-realizadas", 1, 1)
-//         .AddProducer(
-//             "transferencia-producer",
-//             producer => producer
-//                 .DefaultTopic("transferencias-realizadas")
-//         )
-//     )
-// );
+builder.Services.AddKafka(kafka => kafka
+    .AddCluster(cluster => cluster
+        .WithBrokers(new[] { kafkaBootstrapServers })
+        .CreateTopicIfNotExists("transferencias-realizadas", 1, 1)
+        .AddProducer(
+            "transferencia-producer",
+            producer => producer
+                .DefaultTopic("transferencias-realizadas")
+        )
+    )
+);
 
-// Kafka Producer Service (Mock para testes sem Kafka)
-builder.Services.AddScoped<IKafkaProducerService, KafkaProducerServiceMock>();
+// Kafka Producer Service (Implementação real com Confluent.Kafka)
+builder.Services.AddScoped<IKafkaProducerService, KafkaProducerService>();
 
 // Valor da tarifa (configurável) - inject como factory
 var valorTarifa = decimal.Parse(builder.Configuration.GetSection("Tarifa")["ValorTransferencia"] ?? "2.00");
@@ -311,9 +311,9 @@ static async Task InicializarBancoDeDados(string connectionString)
         // Tabela transferencia
         var createTableTransferencia = @"
             CREATE TABLE IF NOT EXISTS transferencia (
-                id TEXT(37) PRIMARY KEY,
-                idcontacorrenteorigem TEXT(37) NOT NULL,
-                idcontacorrentedestino TEXT(37) NOT NULL,
+                idtransferencia TEXT(37) PRIMARY KEY,
+                idcontacorrente_origem TEXT(37) NOT NULL,
+                idcontacorrente_destino TEXT(37) NOT NULL,
                 valor REAL NOT NULL,
                 datamovimento TEXT(25) NOT NULL
             );";

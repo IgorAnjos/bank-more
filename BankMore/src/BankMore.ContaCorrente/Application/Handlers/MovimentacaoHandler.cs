@@ -88,18 +88,23 @@ public class MovimentacaoHandler : IRequestHandler<MovimentacaoCommand, bool>
         }
 
         // ✅ VALIDAÇÃO DE SALDO ANTES DE DÉBITO (Item 3 - duvidas.md)
+        var saldoAnterior = await _movimentoRepository.CalcularSaldoAsync(idContaMovimentacao);
+        
         if (request.TipoMovimento == 'D')
         {
-            var saldoAtual = await _movimentoRepository.CalcularSaldoAsync(idContaMovimentacao);
-            
-            if (saldoAtual < request.Valor)
+            if (saldoAnterior < request.Valor)
             {
-                throw new InvalidOperationException($"INSUFFICIENT_BALANCE: Saldo insuficiente. Disponível: {saldoAtual:F2}, Solicitado: {request.Valor:F2}");
+                throw new InvalidOperationException($"INSUFFICIENT_BALANCE: Saldo insuficiente. Disponível: {saldoAnterior:F2}, Solicitado: {request.Valor:F2}");
             }
         }
 
+        // Calcular saldo atualizado
+        var saldoAtualizado = request.TipoMovimento == 'C' 
+            ? saldoAnterior + request.Valor 
+            : saldoAnterior - request.Valor;
+
         // Criar o movimento dentro de transação
-        var movimento = new Movimento(idContaMovimentacao, request.TipoMovimento, request.Valor);
+        var movimento = new Movimento(idContaMovimentacao, request.TipoMovimento, request.Valor, saldoAnterior, saldoAtualizado);
         
         // Persistir movimento
         await _movimentoRepository.AdicionarAsync(movimento);

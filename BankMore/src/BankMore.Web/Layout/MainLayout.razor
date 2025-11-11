@@ -1,4 +1,10 @@
-﻿@inherits LayoutComponentBase
+﻿@using BankMore.Web.Services
+@inject AuthService AuthService
+@inject TokenService TokenService
+@inject ContaService ContaService
+@inject NavigationManager NavigationManager
+@inherits LayoutComponentBase
+@implements IDisposable
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -6,7 +12,17 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            @if (isAuthenticated && !string.IsNullOrEmpty(numeroConta))
+            {
+                <span class="text-white">
+                    <span class="bi bi-person-circle" aria-hidden="true"></span> 
+                    Conta: <strong>@numeroConta</strong>
+                </span>
+            }
+            else
+            {
+                <span class="text-white">🏦 BankMore</span>
+            }
         </div>
 
         <article class="content px-4">
@@ -14,3 +30,59 @@
         </article>
     </main>
 </div>
+
+@code {
+    private bool isAuthenticated = false;
+    private string? numeroConta;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await TokenService.InitializeAsync();
+        await LoadUserInfo();
+        
+        // Registra listener para mudanças de navegação
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        await TokenService.InitializeAsync();
+        await LoadUserInfo();
+        StateHasChanged();
+    }
+
+    private async Task LoadUserInfo()
+    {
+        isAuthenticated = AuthService.IsAuthenticated();
+        
+        if (isAuthenticated)
+        {
+            try
+            {
+                var idConta = TokenService.GetIdConta();
+                if (!string.IsNullOrEmpty(idConta))
+                {
+                    // Busca os dados da conta da API
+                    var conta = await ContaService.ObterContaAsync(idConta);
+                    if (conta != null)
+                    {
+                        numeroConta = conta.NumeroContaCorrente.ToString();
+                    }
+                }
+            }
+            catch
+            {
+                numeroConta = null;
+            }
+        }
+        else
+        {
+            numeroConta = null;
+        }
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

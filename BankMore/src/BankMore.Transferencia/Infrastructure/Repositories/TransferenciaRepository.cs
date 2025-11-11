@@ -24,13 +24,13 @@ public class TransferenciaRepository : ITransferenciaRepository
     {
         const string sql = @"
             SELECT 
-                id AS Id,
-                idcontacorrenteorigem AS IdContaCorrenteOrigem,
-                idcontacorrentedestino AS IdContaCorrenteDestino,
+                idtransferencia AS Id,
+                idcontacorrente_origem AS IdContaCorrenteOrigem,
+                idcontacorrente_destino AS IdContaCorrenteDestino,
                 datamovimento AS DataMovimento,
                 valor AS Valor
             FROM transferencia
-            WHERE id = @Id";
+            WHERE idtransferencia = @Id";
 
         using var connection = new SqliteConnection(_connectionString);
         return await connection.QueryFirstOrDefaultAsync<TransferenciaEntity>(sql, new { Id = id });
@@ -40,9 +40,9 @@ public class TransferenciaRepository : ITransferenciaRepository
     {
         const string sql = @"
             INSERT INTO transferencia (
-                id,
-                idcontacorrenteorigem,
-                idcontacorrentedestino,
+                idtransferencia,
+                idcontacorrente_origem,
+                idcontacorrente_destino,
                 datamovimento,
                 valor
             ) VALUES (
@@ -62,13 +62,13 @@ public class TransferenciaRepository : ITransferenciaRepository
     {
         const string sql = @"
             SELECT 
-                id AS Id,
-                idcontacorrenteorigem AS IdContaCorrenteOrigem,
-                idcontacorrentedestino AS IdContaCorrenteDestino,
+                idtransferencia AS Id,
+                idcontacorrente_origem AS IdContaCorrenteOrigem,
+                idcontacorrente_destino AS IdContaCorrenteDestino,
                 datamovimento AS DataMovimento,
                 valor AS Valor
             FROM transferencia
-            WHERE idcontacorrenteorigem = @IdContaCorrenteOrigem
+            WHERE idcontacorrente_origem = @IdContaCorrenteOrigem
             ORDER BY datamovimento DESC";
 
         using var connection = new SqliteConnection(_connectionString);

@@ -19,20 +19,48 @@ public class AuthService
 
     public async Task<LoginResponse?> LoginAsync(LoginRequest request)
     {
-        var response = await _httpClient.PostAsJsonAsync("/api/v1/auth/login", request);
+        // Cria o payload com o campo correto que a API espera
+        var payload = new
+        {
+            numeroOuCpf = request.NumeroContaOuCpf,
+            senha = request.Senha
+        };
+
+        Console.WriteLine($"[AUTH SERVICE] Enviando payload: numeroOuCpf='{payload.numeroOuCpf}', senhaLength={payload.senha?.Length ?? 0}");
+        
+        var response = await _httpClient.PostAsJsonAsync("/api/v1/auth/tokens", payload);
+        
+        Console.WriteLine($"[AUTH SERVICE] Status code: {response.StatusCode}");
         
         if (response.IsSuccessStatusCode)
         {
             var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
             if (loginResponse != null)
             {
-                _tokenService.SetToken(loginResponse.Token);
-                _tokenService.SetIdConta(loginResponse.Conta?.Id ?? string.Empty);
+                Console.WriteLine($"[AUTH SERVICE] Token recebido e salvo. ID Conta: {loginResponse.IdContaCorrente}");
+                _tokenService.SetToken(loginResponse.AccessToken);
+                _tokenService.SetIdConta(loginResponse.IdContaCorrente);
             }
             return loginResponse;
         }
+        else
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"[AUTH SERVICE] Erro: {errorContent}");
+        }
         
         return null;
+    }
+
+    public async Task<HttpResponseMessage> ValidarSenhaAsync(string numeroOuCpf, string senha)
+    {
+        var payload = new
+        {
+            numeroOuCpf = numeroOuCpf,
+            senha = senha
+        };
+
+        return await _httpClient.PostAsJsonAsync("/api/v1/auth/tokens", payload);
     }
 
     public async Task<ContaDto?> CadastrarContaAsync(CadastrarContaRequest request)

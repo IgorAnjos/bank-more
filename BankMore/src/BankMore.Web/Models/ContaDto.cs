@@ -14,8 +14,10 @@ public class ContaDto
 
 public class SaldoDto
 {
+    public int NumeroConta { get; set; }
+    public string NomeTitular { get; set; } = string.Empty;
     public decimal Saldo { get; set; }
-    public DateTime DataConsulta { get; set; }
+    public string DataHoraConsulta { get; set; } = string.Empty;
 }
 
 public class MovimentoDto

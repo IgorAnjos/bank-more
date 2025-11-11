@@ -44,6 +44,7 @@ public class ContaService
         int page = 1,
         int pageSize = 20)
     {
+        Console.WriteLine($"[SERVICE] ListarMovimentosAsync chamado para conta: {id}");
         AddAuthorizationHeader();
         
         var query = $"/api/v1/contas/{id}/movimentos?page={page}&pageSize={pageSize}";
@@ -51,7 +52,19 @@ public class ContaService
         if (dataInicio.HasValue) query += $"&dataInicio={dataInicio:yyyy-MM-dd}";
         if (dataFim.HasValue) query += $"&dataFim={dataFim:yyyy-MM-dd}";
 
-        return await _httpClient.GetFromJsonAsync<PaginatedList<MovimentoDto>>(query);
+        Console.WriteLine($"[SERVICE] URL completa: {_httpClient.BaseAddress}{query}");
+        
+        try
+        {
+            var result = await _httpClient.GetFromJsonAsync<PaginatedList<MovimentoDto>>(query);
+            Console.WriteLine($"[SERVICE] Resultado recebido - null: {result == null}, Items: {result?.Items?.Count}, Total: {result?.TotalItems}");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[SERVICE ERRO] {ex.GetType().Name}: {ex.Message}");
+            throw;
+        }
     }
 
     public async Task<HttpResponseMessage> CriarMovimentoAsync(string id, MovimentacaoRequest request)

@@ -6,7 +6,6 @@
 
 [![Blazor](https://img.shields.io/badge/Blazor-WebAssembly-blueviolet?logo=blazor)](https://blazor.net/)
 
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](https://www.docker.com/)Sistema bancário digital com **arquitetura de microsserviços**, **comunicação assíncrona via Kafka**, **processamento de tarifas em tempo real**, **interface web moderna com Blazor WebAssembly** e **observabilidade completa** (Serilog + Seq + Prometheus + Grafana).Sistema bancário com arquitetura de microsserviços, comunicação assíncrona via Kafka, processamento de tarifas em tempo real e interface web moderna com Blazor WebAssembly.
 
 [![Kafka](https://img.shields.io/badge/Kafka-4.0-black?logo=apache-kafka)](https://kafka.apache.org/)
 
@@ -16,7 +15,6 @@
 
 ---## 🏗️ Arquitetura
 
-Sistema bancário completo com **arquitetura de microsserviços**, **comunicação assíncrona via Kafka**, **processamento de tarifas em tempo real**, **interface web moderna com Blazor WebAssembly** e **observabilidade completa** (Serilog + Seq + Prometheus + Grafana).
 
 
 
@@ -230,9 +228,7 @@ O **BankMore** é um sistema bancário digital moderno desenvolvido para demonst
 
 │  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌────────────┐     │
 
-│  │ Serilog │─►│   Seq    │  │Prometheus│─►│  Grafana   │     │             │                 ▼## 🚀 Como Executar
 
-│  │  Logs   │  │ (5341)   │  │  (9090)  │  │   (3000)   │     │
 
 │  └─────────┘  └──────────┘  └──────────┘  └────────────┘     │┌────────────┼─────────────────────────────────────────────────┐
 
@@ -266,9 +262,7 @@ O **BankMore** é um sistema bancário digital moderno desenvolvido para demonst
 
 | **Seq** | Seq Logs | 5341 | Agregação e visualização de logs |
 
-| **Prometheus** | Prometheus | 9090 | Coleta de métricas |```
 
-| **Grafana** | Grafana | 3000 | Dashboards e visualizações |
 
 ┌──────────────────────────────────────────────────────────────┐
 
@@ -318,15 +312,12 @@ O **BankMore** é um sistema bancário digital moderno desenvolvido para demonst
 
 - **Serilog.Sinks.Seq** - Sink para Seq
 
-- **prometheus-net 8.2.1** - Métricas Prometheus│  ┌─────────┐  ┌──────────┐  ┌──────────┐  ┌────────────┐   │dotnet run
 
 - **Health Checks** - Monitoramento (SQLite, Redis, Kafka)
 
-│  │ Serilog │─►│   Seq    │  │Prometheus│─►│  Grafana   │   │```
 
 ### DevOps
 
-- **Docker & Docker Compose** - Containerização│  │  Logs   │  │ (5341)   │  │  (9090)  │  │   (3000)   │   │
 
 - **Nginx** - Web server para Blazor
 
@@ -394,11 +385,9 @@ O **BankMore** é um sistema bancário digital moderno desenvolvido para demonst
 
 - ✅ Extrato com paginação
 
-- ✅ Filtros por tipo e período| **Prometheus** | Prometheus | 9090 | Coleta de métricas |- **📖 Swagger Transferência**: http://localhost:5004
 
 
 
-### 🔄 Transferências| **Grafana** | Grafana | 3000 | Dashboards e visualizações |
 
 - ✅ Transferência entre contas
 
@@ -430,11 +419,9 @@ O **BankMore** é um sistema bancário digital moderno desenvolvido para demonst
 
 - ✅ Logs estruturados (Serilog + Seq)
 
-- ✅ Métricas Prometheus- **ASP.NET Core** - APIs RESTful### Autenticação
 
 - ✅ Health Checks (/health, /health/ready, /health/live)
 
-- ✅ Dashboards Grafana- **Entity Framework Core 9.0.10** - ORM (API Conta)- ✅ Login com CPF ou número da conta
 
 - ✅ Correlation ID para rastreamento
 
@@ -502,7 +489,6 @@ docker-compose up -d --build- **Serilog.Sinks.Console** - Sink para Console
 
 
 
-# Aguardar serviços iniciarem (~30 segundos)- **prometheus-net 8.2.1** - Métricas Prometheus## 🎨 Tecnologias
 
 # Windows (PowerShell):
 
@@ -534,11 +520,9 @@ docker-compose ps
 
 
 
-```- **Prometheus** - Métricas### Backend
 
 NAME                           STATUS          PORTS
 
-bankmore-web-1                 Up             0.0.0.0:8080->80/tcp- **Grafana** - Visualização- **.NET 9.0**
 
 bankmore-api-conta-1           Up             0.0.0.0:5003->8080/tcp
 
@@ -554,9 +538,7 @@ redis                          Up             0.0.0.0:6379->6379/tcp- **xUnit 2.
 
 seq                            Up             0.0.0.0:5341->80/tcp
 
-prometheus                     Up             0.0.0.0:9090->9090/tcp- **FluentAssertions 8.8.0** - Assertions legíveis- **SQLite**
 
-grafana                        Up             0.0.0.0:3000->3000/tcp
 
 ```- **Moq 4.20.72** - Mocking- **JWT Bearer Authentication**
 
@@ -578,9 +560,7 @@ grafana                        Up             0.0.0.0:3000->3000/tcp
 
 | **📊 Seq (Logs)** | http://localhost:5341 | - |
 
-| **📈 Prometheus** | http://localhost:9090 | - |## 🔧 Pré-requisitos
 
-| **📊 Grafana** | http://localhost:3000 | admin/admin |
 
 ## ✨ Funcionalidades
 
@@ -634,7 +614,6 @@ grafana                        Up             0.0.0.0:3000->3000/tcp
 
    - Busque por "Transferência realizada"
 
-2. **Métricas no Prometheus**: http://localhost:9090- ✅ Consultar dados da conta│   │   ├── Services/                    # HTTP Services
 
    - Query: `http_requests_received_total`
 
@@ -742,7 +721,6 @@ cd tests/BankMore.Web.E2ETests- ✅ Logs estruturados (Serilog + Seq)3. Clique e
 
 dotnet test
 
-```- ✅ Métricas Prometheus4. Cadastre-se com CPF, nome e senha
 
 
 
@@ -750,7 +728,6 @@ dotnet test
 
 
 
-- **CadastroE2ETests** (9 testes) - Cadastro de conta- ✅ Dashboards Grafana (opcional)6. Adicione saldo (Crédito de R$ 1.000)
 
 - **LoginE2ETests** (10 testes) - Login e autenticação
 
@@ -802,7 +779,6 @@ CorrelationId = "abc-123-def"
 
 
 
-### 📈 Métricas (Prometheus)---
 
 
 
@@ -1030,11 +1006,9 @@ BankMore/
 
 │   │   ├── Api/                         # Controllers + Program.cs
 
-│   │   ├── Application/                 # CQRS (MediatR)prometheus                     Up             0.0.0.0:9090->9090/tcpcurl -X POST http://localhost:5003/api/conta `
 
 │   │   ├── Domain/                      # Entidades + Interfaces
 
-│   │   └── Infrastructure/              # EF Core + Repositóriosgrafana                        Up             0.0.0.0:3000->3000/tcp  -H "Content-Type: application/json" `
 
 │   ├── BankMore.Transferencia/          # Microsserviço Transferência
 
@@ -1060,7 +1034,6 @@ BankMore/
 
 ├── docker-compose.yml                   # 10 serviços|-----------|-----|-------------|
 
-├── prometheus.yml
 
 └── README.md| **🌐 Aplicação Web** | http://localhost:8080 | - |# 2. Cadastrar conta destino
 
@@ -1078,11 +1051,9 @@ BankMore/
 
 
 
----| **📈 Prometheus** | http://localhost:9090 | - |    "cpf": "98765432100",
 
 
 
-## 🐛 Troubleshooting| **📊 Grafana** | http://localhost:3000 | admin/admin |    "nome": "Maria Santos",
 
 
 
@@ -1350,11 +1321,9 @@ Desenvolvido por **Igor Anjos**
 
 - Blazor WebAssembly
 
-- Apache Kafka + Redis#### **Passo 8: Verificar Métricas no Prometheus**
 
 - Docker & Docker Compose
 
-- Serilog + Seq + Prometheus + Grafana### API Transferência (`appsettings.json`)
 
 - xUnit + Selenium WebDriver
 
@@ -1600,7 +1569,6 @@ BankMore/}
 │   └── teste-desevolvedor-csharp-api.md     # Guia de desenvolvimento
 │
 ├── 📄 docker-compose.yml                     # Orquestração Docker (10 serviços)
-├── 📄 prometheus.yml                         # Configuração Prometheus
 ├── 📄 README.md                              # Este arquivo
 ├── 📄 VERSION.md                             # Controle de versão
 ├── 📄 CHANGELOG.md                           # Histórico de mudanças
@@ -1654,9 +1622,7 @@ NumeroContaCorrente = "12345"
 CorrelationId = "abc-123-def"
 ```
 
-### 📈 Métricas (Prometheus)
 
-#### Acessar Prometheus
 - **URL**: http://localhost:9090
 - **Métricas Disponíveis**:
   - `http_requests_received_total` - Total de requisições HTTP
@@ -1714,24 +1680,19 @@ health_check_status{status="Unhealthy"}
 }
 ```
 
-### 📊 Grafana (Opcional)
 
-#### Acessar Grafana
 - **URL**: http://localhost:3000
 - **Credenciais**: `admin` / `admin`
 
 #### Configurar Datasource
 1. Acesse **Configuration** → **Data Sources**
 2. Clique em **Add data source**
-3. Selecione **Prometheus**
-4. Configure URL: `http://prometheus:9090`
 5. Clique em **Save & Test**
 
 #### Importar Dashboards
 1. Acesse **Dashboards** → **Import**
 2. Use IDs de dashboards públicos:
    - **ASP.NET Core**: ID `10915`
-   - **Prometheus**: ID `2`
    - **Node Exporter**: ID `1860`
 
 ---
@@ -2089,10 +2050,8 @@ docker-compose logs api-conta | grep -i seq
 # URL: http://localhost:5341
 ```
 
-### Problema: Prometheus não coleta métricas
 
 ```bash
-# Verificar targets no Prometheus
 # Acesse: http://localhost:9090/targets
 # Status deve ser "UP"
 
@@ -2230,7 +2189,6 @@ Este projeto é um **sistema de demonstração educacional** desenvolvido para f
 - Blazor WebAssembly
 - Docker & Docker Compose
 - Apache Kafka
-- Serilog + Seq + Prometheus + Grafana
 - xUnit + Selenium WebDriver
 
 ---

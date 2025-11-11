@@ -46,7 +46,9 @@ public class TransferenciasController : ControllerBase
     {
         try
         {
-            var idContaCorrente = User.FindFirstValue("idcontacorrente")
+            // O JWT usa o claim "sub" (Subject) para armazenar o ID da conta
+            var idContaCorrente = User.FindFirstValue(ClaimTypes.NameIdentifier) 
+                ?? User.FindFirstValue("sub")
                 ?? throw new UnauthorizedAccessException("Token não contém identificador da conta");
 
             var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
@@ -146,10 +148,39 @@ public class TransferenciasController : ControllerBase
             };
             return Conflict(problem);
         }
+        catch (HttpRequestException ex) when (ex.Message.Contains("INSUFFICIENT_BALANCE") || ex.Message.Contains("Saldo insuficiente"))
+        {
+            var problem = new ApiProblemDetails
+            {
+                Type = "https://exemplo.com/errors/insufficient-balance",
+                Title = "Saldo Insuficiente",
+                Status = StatusCodes.Status422UnprocessableEntity,
+                Detail = "Você não possui saldo suficiente para realizar esta transferência. Verifique seu saldo e tente novamente.",
+                Instance = HttpContext.Request.Path,
+                ErrorCode = "INSUFFICIENT_BALANCE"
+            };
+            return UnprocessableEntity(problem);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Erro ao realizar transferência");
-            var problem = new ApiProblemDetails
+            
+            // Verificar se o erro interno contém informação sobre saldo insuficiente
+            if (ex.Message.Contains("INSUFFICIENT_BALANCE") || ex.Message.Contains("Saldo insuficiente"))
+            {
+                var problem = new ApiProblemDetails
+                {
+                    Type = "https://exemplo.com/errors/insufficient-balance",
+                    Title = "Saldo Insuficiente",
+                    Status = StatusCodes.Status422UnprocessableEntity,
+                    Detail = "Você não possui saldo suficiente para realizar esta transferência. Verifique seu saldo e tente novamente.",
+                    Instance = HttpContext.Request.Path,
+                    ErrorCode = "INSUFFICIENT_BALANCE"
+                };
+                return UnprocessableEntity(problem);
+            }
+            
+            var problemGeneric = new ApiProblemDetails
             {
                 Type = "https://exemplo.com/errors/internal-error",
                 Title = "Erro Interno",
@@ -158,7 +189,7 @@ public class TransferenciasController : ControllerBase
                 Instance = HttpContext.Request.Path,
                 ErrorCode = "INTERNAL_ERROR"
             };
-            return StatusCode(StatusCodes.Status500InternalServerError, problem);
+            return StatusCode(StatusCodes.Status500InternalServerError, problemGeneric);
         }
     }
 
@@ -178,7 +209,9 @@ public class TransferenciasController : ControllerBase
     {
         try
         {
-            var idContaCorrente = User.FindFirstValue("idcontacorrente")
+            // O JWT usa o claim "sub" (Subject) para armazenar o ID da conta
+            var idContaCorrente = User.FindFirstValue(ClaimTypes.NameIdentifier) 
+                ?? User.FindFirstValue("sub")
                 ?? throw new UnauthorizedAccessException("Token não contém identificador da conta");
 
             var query = new ObterTransferenciaQuery
@@ -272,7 +305,9 @@ public class TransferenciasController : ControllerBase
     {
         try
         {
-            var idContaCorrente = User.FindFirstValue("idcontacorrente")
+            // O JWT usa o claim "sub" (Subject) para armazenar o ID da conta
+            var idContaCorrente = User.FindFirstValue(ClaimTypes.NameIdentifier) 
+                ?? User.FindFirstValue("sub")
                 ?? throw new UnauthorizedAccessException("Token não contém identificador da conta");
 
             // Validar pageSize

@@ -5,6 +5,7 @@
 @inject TokenService TokenService
 @inject AuthService AuthService
 @inject NavigationManager NavigationManager
+@inject ContaService ContaService
 
 <PageTitle>Transferências - BankMore</PageTitle>
 
@@ -42,6 +43,44 @@
                             <DataAnnotationsValidator />
 
                             <div class="mb-3">
+                                <label class="form-label">Tipo de Transferência</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="tipoTransferencia" 
+                                               id="tipoInterna" 
+                                               checked="@(tipoTransferencia == "Interna")"
+                                               @onchange="@(() => SelecionarTipoTransferencia("Interna"))" />
+                                        <label class="form-check-label" for="tipoInterna">
+                                            <i class="bi bi-building"></i> Transferência Interna (Mesma Instituição)
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="tipoTransferencia" 
+                                               id="tipoTED" 
+                                               checked="@(tipoTransferencia == "TED")"
+                                               @onchange="@(() => SelecionarTipoTransferencia("TED"))" />
+                                        <label class="form-check-label" for="tipoTED">
+                                            <i class="bi bi-bank"></i> TED (Outra Instituição)
+                                        </label>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">
+                                    @if (tipoTransferencia == "Interna")
+                                    {
+                                        <span>Taxa: <strong>R$ 2,00</strong> - Processamento imediato</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Taxa: <strong>R$ 5,00</strong> - Processamento no mesmo dia útil</span>
+                                    }
+                                </small>
+                            </div>
+
+                            <div class="mb-3">
                                 <label for="numeroContaDestino" class="form-label">Número da Conta Destino</label>
                                 <InputNumber id="numeroContaDestino" class="form-control" @bind-Value="transferenciaRequest.NumeroContaDestino" placeholder="Digite o número da conta" />
                                 <ValidationMessage For="@(() => transferenciaRequest.NumeroContaDestino)" />
@@ -49,9 +88,12 @@
 
                             <div class="mb-3">
                                 <label for="valor" class="form-label">Valor</label>
-                                <InputNumber id="valor" class="form-control" @bind-Value="transferenciaRequest.Valor" placeholder="0,00" />
+                                <input id="valor" 
+                                       class="form-control" 
+                                       value="@displayValor"
+                                       @oninput="OnValorChanged"
+                                       placeholder="R$ 0,00" />
                                 <ValidationMessage For="@(() => transferenciaRequest.Valor)" />
-                                <small class="form-text text-muted">Taxa de R$ 2,00 será aplicada.</small>
                             </div>
 
                             <div class="d-grid">
@@ -67,6 +109,58 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Modal de Confirmação com Senha -->
+            @if (showConfirmacaoModal)
+            {
+                <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-warning">
+                                <h5 class="modal-title">Confirmar Transferência</h5>
+                                <button type="button" class="btn-close" @onclick="FecharModal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>Você está prestes a realizar uma transferência:</strong></p>
+                                <ul class="list-unstyled">
+                                    <li><strong>Tipo:</strong> @tipoTransferencia @(tipoTransferencia == "Interna" ? "(Mesma Instituição)" : "(Outra Instituição)")</li>
+                                    <li><strong>Conta Destino:</strong> @transferenciaRequest.NumeroContaDestino</li>
+                                    <li><strong>Valor:</strong> @transferenciaRequest.Valor.ToString("C", new System.Globalization.CultureInfo("pt-BR"))</li>
+                                    <li><strong>Tarifa:</strong> @taxaTransferencia.ToString("C", new System.Globalization.CultureInfo("pt-BR"))</li>
+                                    <li><strong>Total:</strong> @((transferenciaRequest.Valor + taxaTransferencia).ToString("C", new System.Globalization.CultureInfo("pt-BR")))</li>
+                                </ul>
+                                
+                                @if (!string.IsNullOrEmpty(senhaErro))
+                                {
+                                    <div class="alert alert-danger" role="alert">
+                                        @senhaErro
+                                    </div>
+                                }
+                                
+                                <div class="mb-3">
+                                    <label for="senhaConfirmacao" class="form-label">Digite sua senha para confirmar:</label>
+                                    <input type="password" 
+                                           id="senhaConfirmacao" 
+                                           class="form-control" 
+                                           @bind="senhaConfirmacao"
+                                           placeholder="Senha"
+                                           @onkeypress="HandleKeyPress" />
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" @onclick="FecharModal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" @onclick="ConfirmarTransferencia" disabled="@isValidandoSenha">
+                                    @if (isValidandoSenha)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    }
+                                    Confirmar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
 
             <div class="col-md-7">
                 <div class="card shadow">
@@ -102,7 +196,7 @@
                                         @foreach (var transferencia in transferencias.Items)
                                         {
                                             <tr>
-                                                <td>@transferencia.DataTransferencia.ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>@FormatarData(transferencia.DataTransferencia)</td>
                                                 <td>@transferencia.NumeroContaDestino</td>
                                                 <td class="text-danger">
                                                     @transferencia.Valor.ToString("C", new System.Globalization.CultureInfo("pt-BR"))
@@ -158,10 +252,18 @@
     private bool isLoading = false;
     private bool isProcessing = false;
     private bool isSuccess = false;
+    private bool showConfirmacaoModal = false;
+    private bool isValidandoSenha = false;
     private string? message;
+    private string? senhaErro;
+    private string? senhaConfirmacao;
+    private string displayValor = "R$ 0,00";
     private RealizarTransferenciaRequest transferenciaRequest = new();
     private PaginatedList<TransferenciaDto>? transferencias;
     private int currentPage = 1;
+    private string tipoTransferencia = "Interna";
+    private decimal taxaTransferencia = 2.00m;
+    private ContaDto? conta;
 
     protected override async Task OnInitializedAsync()
     {
@@ -174,7 +276,49 @@
             return;
         }
 
+        // Carrega dados da conta
+        try
+        {
+            var idConta = TokenService.GetIdConta();
+            if (!string.IsNullOrEmpty(idConta))
+            {
+                conta = await ContaService.ObterContaAsync(idConta);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao carregar conta: {ex.Message}");
+        }
+
         await CarregarTransferencias();
+    }
+
+    private void SelecionarTipoTransferencia(string tipo)
+    {
+        tipoTransferencia = tipo;
+        taxaTransferencia = tipo == "Interna" ? 2.00m : 5.00m;
+    }
+
+    private void OnValorChanged(ChangeEventArgs e)
+    {
+        var input = e.Value?.ToString() ?? string.Empty;
+        
+        // Remove tudo que não é número
+        var apenasNumeros = new string(input.Where(char.IsDigit).ToArray());
+        
+        if (string.IsNullOrEmpty(apenasNumeros))
+        {
+            transferenciaRequest.Valor = 0;
+            displayValor = "R$ 0,00";
+            return;
+        }
+        
+        // Converte para decimal (centavos)
+        if (decimal.TryParse(apenasNumeros, out decimal centavos))
+        {
+            transferenciaRequest.Valor = centavos / 100;
+            displayValor = transferenciaRequest.Valor.ToString("C", new System.Globalization.CultureInfo("pt-BR"));
+        }
     }
 
     private async Task CarregarTransferencias(int page = 1)
@@ -195,13 +339,70 @@
         }
     }
 
-    private async Task RealizarTransferencia()
+    private Task RealizarTransferencia()
     {
-        isProcessing = true;
-        message = null;
+        // Valida campos antes de abrir modal
+        if (transferenciaRequest.NumeroContaDestino <= 0)
+        {
+            isSuccess = false;
+            message = "Informe o número da conta destino.";
+            return Task.CompletedTask;
+        }
+
+        if (transferenciaRequest.Valor <= 0)
+        {
+            isSuccess = false;
+            message = "Informe um valor maior que zero.";
+            return Task.CompletedTask;
+        }
+
+        // Abre modal de confirmação
+        showConfirmacaoModal = true;
+        senhaErro = null;
+        senhaConfirmacao = string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private void FecharModal()
+    {
+        showConfirmacaoModal = false;
+        senhaErro = null;
+        senhaConfirmacao = string.Empty;
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await ConfirmarTransferencia();
+        }
+    }
+
+    private async Task ConfirmarTransferencia()
+    {
+        if (string.IsNullOrWhiteSpace(senhaConfirmacao))
+        {
+            senhaErro = "Digite sua senha.";
+            return;
+        }
+
+        isValidandoSenha = true;
+        senhaErro = null;
 
         try
         {
+            // Valida senha usando o CPF do usuário
+            var numeroOuCpf = conta?.Cpf ?? "";
+            var validacaoResponse = await AuthService.ValidarSenhaAsync(numeroOuCpf, senhaConfirmacao);
+
+            if (!validacaoResponse.IsSuccessStatusCode)
+            {
+                senhaErro = "Senha incorreta. Tente novamente.";
+                return;
+            }
+
+            // Senha validada, prosseguir com a transferência
+            isProcessing = true;
             transferenciaRequest.ChaveIdempotencia = Guid.CreateVersion7().ToString();
             var resultado = await TransferenciaService.RealizarTransferenciaAsync(transferenciaRequest);
 
@@ -210,28 +411,58 @@
                 isSuccess = true;
                 message = $"Transferência realizada com sucesso! Valor: {resultado.Valor:C}, Tarifa: {resultado.TarifaAplicada:C}";
                 transferenciaRequest = new();
+                displayValor = "R$ 0,00";
                 
+                FecharModal();
                 await CarregarTransferencias();
             }
             else
             {
-                isSuccess = false;
-                message = "Erro ao realizar transferência. Verifique os dados e tente novamente.";
+                senhaErro = "Erro ao realizar transferência.";
             }
         }
         catch (HttpRequestException ex)
         {
-            isSuccess = false;
-            message = $"Erro de comunicação: {ex.Message}";
+            // Tentar extrair mensagem de erro mais amigável
+            if (ex.Message.Contains("422") || ex.Message.Contains("Unprocessable"))
+            {
+                senhaErro = "Saldo insuficiente. Verifique seu saldo e tente novamente.";
+            }
+            else if (ex.Message.Contains("INSUFFICIENT_BALANCE") || ex.Message.Contains("Saldo insuficiente"))
+            {
+                senhaErro = "Saldo insuficiente. Verifique seu saldo e tente novamente.";
+            }
+            else
+            {
+                senhaErro = $"Erro de comunicação: {ex.Message}";
+            }
         }
         catch (Exception ex)
         {
-            isSuccess = false;
-            message = $"Erro ao realizar transferência: {ex.Message}";
+            if (ex.Message.Contains("INSUFFICIENT_BALANCE") || ex.Message.Contains("Saldo insuficiente"))
+            {
+                senhaErro = "Saldo insuficiente. Verifique seu saldo e tente novamente.";
+            }
+            else
+            {
+                senhaErro = $"Erro: {ex.Message}";
+            }
         }
         finally
         {
+            isValidandoSenha = false;
             isProcessing = false;
         }
+    }
+
+    private string FormatarData(string dataString)
+    {
+        if (string.IsNullOrWhiteSpace(dataString))
+            return "-";
+
+        if (DateTime.TryParse(dataString, out DateTime data))
+            return data.ToString("dd/MM/yyyy HH:mm");
+
+        return dataString;
     }
 }

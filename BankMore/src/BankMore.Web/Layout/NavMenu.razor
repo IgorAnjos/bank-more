@@ -2,6 +2,7 @@
 @inject AuthService AuthService
 @inject TokenService TokenService
 @inject NavigationManager NavigationManager
+@implements IDisposable
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -57,6 +58,34 @@
     protected override async Task OnInitializedAsync()
     {
         await TokenService.InitializeAsync();
+        CheckAuthenticationState();
+        
+        // Registra um listener para mudanças de navegação
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            await TokenService.InitializeAsync();
+            var newAuthState = AuthService.IsAuthenticated();
+            if (newAuthState != isAuthenticated)
+            {
+                isAuthenticated = newAuthState;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        CheckAuthenticationState();
+        StateHasChanged();
+    }
+
+    private void CheckAuthenticationState()
+    {
         isAuthenticated = AuthService.IsAuthenticated();
     }
 
@@ -69,6 +98,12 @@
     {
         AuthService.Logout();
         isAuthenticated = false;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }
 

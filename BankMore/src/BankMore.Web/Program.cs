@@ -12,17 +12,20 @@ builder.Services.AddScoped<TokenService>();
 
 builder.Services.AddHttpClient<ContaService>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:5003");
+    // Usar URL relativa - Nginx fará o proxy para bankmore-api-conta:8080
+    client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
 });
 
 builder.Services.AddHttpClient<TransferenciaService>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:5004");
+    // Usar URL relativa - Nginx fará o proxy para bankmore-api-transferencia:8080
+    client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
 });
 
 builder.Services.AddHttpClient<AuthService>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:5003");
+    // Usar URL relativa - Nginx fará o proxy para bankmore-api-conta:8080
+    client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
 });
 
 await builder.Build().RunAsync();

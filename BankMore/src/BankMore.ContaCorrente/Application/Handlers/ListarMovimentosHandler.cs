@@ -53,6 +53,8 @@ public class ListarMovimentosHandler : IRequestHandler<ListarMovimentosQuery, Pa
                 IdContaCorrente = m.IdContaCorrente,
                 TipoMovimento = m.TipoMovimento,
                 Valor = m.Valor,
+                SaldoAnterior = m.SaldoAnterior,
+                SaldoAtualizado = m.SaldoAtualizado,
                 DataMovimento = m.DataMovimento
             })
             .ToListAsync(cancellationToken);

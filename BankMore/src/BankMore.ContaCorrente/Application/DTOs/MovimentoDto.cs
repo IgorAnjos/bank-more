@@ -26,6 +26,16 @@ public class MovimentoDto : IHateoasResource
     public decimal Valor { get; set; }
 
     /// <summary>
+    /// Saldo antes do movimento
+    /// </summary>
+    public decimal SaldoAnterior { get; set; }
+
+    /// <summary>
+    /// Saldo depois do movimento
+    /// </summary>
+    public decimal SaldoAtualizado { get; set; }
+
+    /// <summary>
     /// Data/hora do movimento
     /// </summary>
     public string DataMovimento { get; set; } = string.Empty;

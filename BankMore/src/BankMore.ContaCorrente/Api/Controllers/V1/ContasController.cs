@@ -52,6 +52,30 @@ public class ContasController : ControllerBase
     }
 
     /// <summary>
+    /// Busca ID da conta pelo número (endpoint público para microsserviços)
+    /// </summary>
+    /// <param name="numeroConta">Número da conta corrente</param>
+    /// <returns>Objeto contendo o ID da conta</returns>
+    /// <response code="200">Retorna o ID da conta</response>
+    /// <response code="404">Conta não encontrada</response>
+    [HttpGet("numero/{numeroConta}")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> BuscarIdPorNumero(int numeroConta)
+    {
+        var query = new ObterContaPorNumeroQuery { NumeroConta = numeroConta };
+        var conta = await _mediator.Send(query);
+
+        if (conta != null && conta.Ativo)
+        {
+            return Ok(new { id = conta.Id });
+        }
+
+        return NotFound();
+    }
+
+    /// <summary>
     /// Cria uma nova conta corrente
     /// </summary>
     /// <param name="request">Dados para cadastro da conta (CPF, nome, senha)</param>
@@ -121,7 +145,7 @@ public class ContasController : ControllerBase
     {
         try
         {
-            var idContaCorrente = User.FindFirstValue("idcontacorrente");
+            var idContaCorrente = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
             // Verificar se o usuário está tentando acessar sua própria conta
             if (string.IsNullOrEmpty(idContaCorrente) || idContaCorrente != id)
@@ -180,7 +204,7 @@ public class ContasController : ControllerBase
     {
         try
         {
-            var idContaCorrente = User.FindFirstValue("idcontacorrente");
+            var idContaCorrente = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
             if (string.IsNullOrEmpty(idContaCorrente) || idContaCorrente != id)
             {
@@ -315,11 +339,20 @@ public class ContasController : ControllerBase
     {
         try
         {
-            var idContaCorrente = User.FindFirstValue("idcontacorrente");
+            // Verificar se é uma chamada de serviço interno (ex: API Transferência)
+            var serviceKey = Request.Headers["X-Service-Key"].FirstOrDefault();
+            var isInternalService = !string.IsNullOrEmpty(serviceKey) && 
+                                   serviceKey == "BankMore-Internal-Service-Key-2024";
 
-            if (string.IsNullOrEmpty(idContaCorrente) || idContaCorrente != id)
+            if (!isInternalService)
             {
-                return Forbid();
+                // Chamada de usuário normal - validar token
+                var idContaCorrente = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+
+                if (string.IsNullOrEmpty(idContaCorrente) || idContaCorrente != id)
+                {
+                    return Forbid();
+                }
             }
 
             var command = new MovimentacaoCommand
@@ -374,6 +407,16 @@ public class ContasController : ControllerBase
                 "INVALID_TYPE"
             ));
         }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("INSUFFICIENT_BALANCE"))
+        {
+            var mensagem = ex.Message.Replace("INSUFFICIENT_BALANCE: ", "");
+            return UnprocessableEntity(CriarProblemDetails(
+                "Saldo Insuficiente",
+                mensagem,
+                StatusCodes.Status422UnprocessableEntity,
+                "INSUFFICIENT_BALANCE"
+            ));
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Erro ao criar movimentação na conta {IdConta}", id);
@@ -416,7 +459,7 @@ public class ContasController : ControllerBase
     {
         try
         {
-            var idContaCorrente = User.FindFirstValue("idcontacorrente");
+            var idContaCorrente = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
 
             if (string.IsNullOrEmpty(idContaCorrente) || idContaCorrente != id)
             {

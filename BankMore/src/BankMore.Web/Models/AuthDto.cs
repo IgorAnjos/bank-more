@@ -8,9 +8,15 @@ public class LoginRequest
 
 public class LoginResponse
 {
-    public string Token { get; set; } = string.Empty;
-    public DateTime Expiration { get; set; }
-    public ContaDto? Conta { get; set; }
+    public string AccessToken { get; set; } = string.Empty;
+    public string RefreshToken { get; set; } = string.Empty;
+    public string IdContaCorrente { get; set; } = string.Empty;
+    public int NumeroConta { get; set; }
+    public int ExpiresInMinutes { get; set; }
+    
+    // Para manter compatibilidade com código existente
+    public string Token => AccessToken;
+    public DateTime Expiration => DateTime.UtcNow.AddMinutes(ExpiresInMinutes);
 }
 
 public class CadastrarContaRequest

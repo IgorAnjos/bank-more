@@ -10,15 +10,22 @@ public class Movimento
     public string DataMovimento { get; private set; }
     public char TipoMovimento { get; private set; } // 'C' = Crédito, 'D' = Débito
     public decimal Valor { get; private set; }
+    public decimal SaldoAnterior { get; private set; }
+    public decimal SaldoAtualizado { get; private set; }
 
     // Navigation property
-    public virtual ContaCorrente ContaCorrente { get; private set; }
+    public virtual ContaCorrente? ContaCorrente { get; private set; }
 
     // Construtor privado para EF Core
-    private Movimento() { }
+    private Movimento() 
+    {
+        IdMovimento = string.Empty;
+        IdContaCorrente = string.Empty;
+        DataMovimento = string.Empty;
+    }
 
     // Construtor para criação de novo movimento
-    public Movimento(string idContaCorrente, char tipoMovimento, decimal valor)
+    public Movimento(string idContaCorrente, char tipoMovimento, decimal valor, decimal saldoAnterior = 0, decimal saldoAtualizado = 0)
     {
         if (string.IsNullOrWhiteSpace(idContaCorrente))
             throw new ArgumentNullException(nameof(idContaCorrente));
@@ -33,6 +40,8 @@ public class Movimento
         IdContaCorrente = idContaCorrente;
         TipoMovimento = tipoMovimento;
         Valor = Math.Round(valor, 2); // Garantir duas casas decimais
+        SaldoAnterior = Math.Round(saldoAnterior, 2);
+        SaldoAtualizado = Math.Round(saldoAtualizado, 2);
         DataMovimento = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
     }
 

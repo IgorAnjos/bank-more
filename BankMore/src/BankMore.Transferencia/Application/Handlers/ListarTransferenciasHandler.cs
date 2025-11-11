@@ -4,17 +4,20 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using BankMore.Transferencia.Application.DTOs;
 using BankMore.Transferencia.Application.Queries;
+using BankMore.Transferencia.Domain.Interfaces;
 
 namespace BankMore.Transferencia.Application.Handlers;
 
 public class ListarTransferenciasHandler : IRequestHandler<ListarTransferenciasQuery, PaginatedList<TransferenciaDto>>
 {
     private readonly string _connectionString;
+    private readonly IContaCorrenteService _contaCorrenteService;
 
-    public ListarTransferenciasHandler(IConfiguration configuration)
+    public ListarTransferenciasHandler(IConfiguration configuration, IContaCorrenteService contaCorrenteService)
     {
         _connectionString = configuration.GetConnectionString("DefaultConnection") 
             ?? throw new InvalidOperationException("Connection string não configurada");
+        _contaCorrenteService = contaCorrenteService ?? throw new ArgumentNullException(nameof(contaCorrenteService));
     }
 
     public async Task<PaginatedList<TransferenciaDto>> Handle(ListarTransferenciasQuery request, CancellationToken cancellationToken)
@@ -28,15 +31,15 @@ public class ListarTransferenciasHandler : IRequestHandler<ListarTransferenciasQ
         // Filtro por tipo (enviadas/recebidas/todas)
         if (request.Tipo == "enviadas")
         {
-            whereConditions.Add("idcontacorrenteorigem = @IdContaCorrente");
+            whereConditions.Add("idcontacorrente_origem = @IdContaCorrente");
         }
         else if (request.Tipo == "recebidas")
         {
-            whereConditions.Add("idcontacorrentedestino = @IdContaCorrente");
+            whereConditions.Add("idcontacorrente_destino = @IdContaCorrente");
         }
         else // todas
         {
-            whereConditions.Add("(idcontacorrenteorigem = @IdContaCorrente OR idcontacorrentedestino = @IdContaCorrente)");
+            whereConditions.Add("(idcontacorrente_origem = @IdContaCorrente OR idcontacorrente_destino = @IdContaCorrente)");
         }
         parameters.Add("IdContaCorrente", request.IdContaCorrente);
 
@@ -44,14 +47,14 @@ public class ListarTransferenciasHandler : IRequestHandler<ListarTransferenciasQ
         if (request.DataInicio.HasValue)
         {
             var dataInicioStr = request.DataInicio.Value.ToString("dd/MM/yyyy");
-            whereConditions.Add("datatransferencia >= @DataInicio");
+            whereConditions.Add("datamovimento >= @DataInicio");
             parameters.Add("DataInicio", dataInicioStr);
         }
 
         if (request.DataFim.HasValue)
         {
             var dataFimStr = request.DataFim.Value.ToString("dd/MM/yyyy");
-            whereConditions.Add("datatransferencia <= @DataFim");
+            whereConditions.Add("datamovimento <= @DataFim");
             parameters.Add("DataFim", dataFimStr);
         }
 
@@ -65,13 +68,13 @@ public class ListarTransferenciasHandler : IRequestHandler<ListarTransferenciasQ
         var sql = $@"
             SELECT 
                 idtransferencia AS Id,
-                idcontacorrenteorigem AS IdContaCorrenteOrigem,
-                idcontacorrentedestino AS IdContaCorrenteDestino,
+                idcontacorrente_origem AS IdContaCorrenteOrigem,
+                idcontacorrente_destino AS IdContaCorrenteDestino,
                 valor AS Valor,
-                datatransferencia AS DataTransferencia
+                datamovimento AS DataTransferencia
             FROM transferencia
             WHERE {whereClause}
-            ORDER BY datatransferencia DESC
+            ORDER BY datamovimento DESC
             LIMIT @PageSize OFFSET @Offset";
 
         parameters.Add("PageSize", request.PageSize);
@@ -79,9 +82,16 @@ public class ListarTransferenciasHandler : IRequestHandler<ListarTransferenciasQ
 
         var items = (await connection.QueryAsync<TransferenciaDto>(sql, parameters)).ToList();
 
-        // Determinar status de cada transferência
+        // Popula campos para evitar erro de deserialização no frontend
+        // TODO: Implementar cache ou buscar números das contas em batch
         foreach (var item in items)
         {
+            // Por enquanto deixamos null/0 para evitar N+1 queries
+            // O frontend deve tratar estes casos
+            item.NumeroContaOrigem = null;
+            item.NumeroContaDestino = 0;
+
+            // Determinar status
             item.Status = item.IdContaCorrenteOrigem == request.IdContaCorrente 
                 ? "Enviada" 
                 : "Recebida";
